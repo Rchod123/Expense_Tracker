@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { COLORS } from '../ui/Constants';
 import { heightPercentageToDP, widthPercentageToDP } from './responsive';
 
 const commonStyles = StyleSheet.create({
@@ -7,13 +8,13 @@ const commonStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     flex: 1,
-    backgroundColor: '#2A7C76',
+    backgroundColor: COLORS.brand,
   },
   radius: {
     borderBottomLeftRadius: heightPercentageToDP(6),
     borderBottomRightRadius: heightPercentageToDP(6),
     paddingHorizontal: widthPercentageToDP(6),
-  }
+  },
 });
 
 

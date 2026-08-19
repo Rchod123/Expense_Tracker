@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
+import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import React, { FC } from 'react';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { heightPercentageToDP } from '../../utils/responsive';
+import { COLORS } from '../Constants';
 
 interface InputProp {
     left?: React.ReactNode;
@@ -9,19 +10,19 @@ interface InputProp {
     right?: boolean;
 }
 
-const CustomInput:FC<InputProp & React.ComponentProps<typeof TextInput>> = ({left,onClear,right,...props}) => {
+const CustomInput:FC<InputProp & React.ComponentProps<typeof TextInput>> = ({left, right, ...props}) => {
   return (
     <View style={styles.flexBox}>
         {left}
      <TextInput 
      {...props}
      style={styles.inputContainer}
-     placeholderTextColor='#ccc'
+    placeholderTextColor={COLORS.textMuted}
      />
      <View style={styles.icon}>
-        {props?.value?.length !=0 && right &&
+        {props?.value?.length !== 0 && right &&
         <TouchableOpacity>
-            <FontAwesome6 name="circle-half-stroke" iconStyle="solid" size={heightPercentageToDP(1)} color={"#ccc"}/>
+            <FontAwesome6 name="circle-half-stroke" iconStyle="solid" size={heightPercentageToDP(1)} color={COLORS.textMuted}/>
         </TouchableOpacity>
         }
      </View>
@@ -38,12 +39,12 @@ const styles = StyleSheet.create({
     },
     inputContainer:{
         width: '70%',
-        fontFamily: "500",
+        fontFamily: '500',
         fontSize: heightPercentageToDP(2),
         paddingVertical: 14,
         paddingBottom: 15,
         height: '100%',
-        color: "black",
+        color: COLORS.textPrimary,
         bottom: -1
     },
     text:{
@@ -58,12 +59,12 @@ const styles = StyleSheet.create({
         borderWidth: 0.5,
         width: '100%',
         marginVertical: 10,
-        backgroundColor: "#fff",
+        backgroundColor: COLORS.surface,
         shadowOffset: {width:1,height:1},
         shadowOpacity: 0.6,
         shadowRadius: 2,
-        shadowColor: "gray",
-        borderColor: "gray",
+        shadowColor: COLORS.textMuted,
+        borderColor: COLORS.textMuted,
     }
 })
 

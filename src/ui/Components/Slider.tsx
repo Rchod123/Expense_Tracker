@@ -1,5 +1,6 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { TextComponent } from './TextComponent';
+import { COLORS } from '../Constants';
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -8,7 +9,7 @@ import {
 const styles = StyleSheet.create({
   mainContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F4F6F6',
+    backgroundColor: COLORS.surfaceMuted,
     marginTop: heightPercentageToDP(2),
     height: heightPercentageToDP(4),
     paddingHorizontal: widthPercentageToDP(1),
@@ -26,24 +27,30 @@ const styles = StyleSheet.create({
 });
 
 type SliderProp = {
-    name1: string,
-    name2: string,
-    toggle: boolean,
-    setToggle: Function,
-}
+  name1: string;
+  name2: string;
+  toggle: boolean;
+  setToggle: (value: boolean) => void;
+};
 
 export const Slider: React.FC<SliderProp> = ({
-    name1,
-    name2,
-    toggle = false,
-    setToggle,
+  name1,
+  name2,
+  toggle = false,
+  setToggle,
 }) => {
   return (
     <View style={styles.mainContainer}>
-      <TouchableOpacity onPress={() => setToggle(false)} style={[styles.slider, !toggle &&{backgroundColor: "white"}]}>
+      <TouchableOpacity
+        onPress={() => setToggle(false)}
+        style={[styles.slider, !toggle && { backgroundColor: COLORS.surface }]}
+      >
         <TextComponent value={name1} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => setToggle(true)} style={[styles.slider,toggle &&{backgroundColor: "white"}]}>
+      <TouchableOpacity
+        onPress={() => setToggle(true)}
+        style={[styles.slider, toggle && { backgroundColor: COLORS.surface }]}
+      >
         <TextComponent value={name2} />
       </TouchableOpacity>
     </View>

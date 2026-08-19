@@ -1,58 +1,68 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { Text, type TextProps as RNTextProps } from 'react-native';
 
-type TextProps = {
+type Variant = 'medium' | 'bold' | 'thin' | 'default';
+type Size =
+  | 'Large'
+  | 'ExtraLarge'
+  | 'Medium'
+  | 'Small'
+  | 'ExtraSmall'
+  | 'MidSection'
+  | 'GMedium'
+  | 'MMedium';
+
+type Props = {
   value: string;
-  varient?: 'medium' | 'bold' | 'thin' | 'default';
+  variant?: Variant;
+  varient?: Variant;
   color?: string;
-  size?: 'Large' | 'ExtraLarge' | 'Medium' | 'Small' | 'ExtraSmall' | 'MidSection' | 'GMedium' | 'MMedium';
+  size?: Size;
+  style?: RNTextProps['style'];
+} & Omit<RNTextProps, 'children' | 'style'>;
+
+const fontWeightMap: Record<Variant, '300' | '400' | '500' | '800'> = {
+  bold: '800',
+  medium: '500',
+  thin: '300',
+  default: '400',
 };
 
-const fontSize = (varient: TextProps['varient']) => {
-  switch (varient) {
-    case 'bold':
-      return '800';
-    case 'medium':
-      return '500';
-    case 'thin':
-      return '300';
-    default:
-      return '400';
-  }
+const fontSizeMap: Record<Size, number> = {
+  ExtraLarge: 42,
+  Large: 36,
+  MidSection: 28,
+  GMedium: 20,
+  MMedium: 18,
+  Medium: 16,
+  Small: 14,
+  ExtraSmall: 12,
 };
 
-const fontValue = (value: TextProps['size']) => {
-  switch (value) {
-    case 'ExtraLarge':
-      return 42;
-    case 'Large':
-      return 36;
-    case "MidSection":
-        return 28;
-    case "GMedium":
-        return 20;
-    case "MMedium":
-        return 18;
-    case 'Small':
-      return 14;
-    case 'ExtraSmall':
-      return 12;
-    default:
-      return 16;
-  }
-};
-
-export const TextComponent: React.FC<TextProps> = ({
+export const TextComponent: React.FC<Props> = ({
   value,
-  varient = 'default',
-  color = 'black',
-  size = "Medium",
+  variant,
+  varient,
+  color = '#000',
+  size = 'Medium',
+  style,
+  ...props
 }) => {
+  const resolvedVariant = variant ?? varient ?? 'default';
+
   return (
-    <View>
-      <Text style={{ fontWeight: fontSize(varient), color: color, fontSize: fontValue(size) }}>
-        {value}
-      </Text>
-    </View>
+    <Text
+      {...props}
+      style={[
+        {
+          color,
+          fontSize: fontSizeMap[size],
+          fontWeight: fontWeightMap[resolvedVariant],
+        },
+        style,
+      ]}
+    >
+      {value}
+    </Text>
   );
 };

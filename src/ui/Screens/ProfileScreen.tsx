@@ -1,68 +1,172 @@
-import { FlatList, Image, TouchableOpacity, View } from "react-native"
-import ScreenHeader from "../Components/ScreenHeader"
-import { heightPercentageToDP, widthPercentageToDP } from "../../utils/responsive";
-import { ImageAssets } from "../../assets";
-import { TextComponent } from "../Components/TextComponent";
-import FontAwesome6 from "@react-native-vector-icons/fontawesome6";
-
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import ScreenHeader from '../Components/ScreenHeader';
+import { ImageAssets } from '../../assets';
+import { TextComponent } from '../Components/TextComponent';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
+import { RootStackParamList } from '../../types/navigation';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { useAuth } from '../../context/authContext';
+import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
 
 const data = [
-    {
-        name: "Invite Friends",
-        icon: "user-plus",
-    },
-    {
-        name: "Account Info",
-        icon: "user",
-    },
-    {
-        name: "Personal profile",
-        icon: "users",
-    },
-    {
-        name: "message center",
-        icon: "inbox",
-    },
-    {
-        name: "login and security",
-        icon: "shield-halved",
-    },
-    {
-        name: "Data and privacy",
-        icon: "file-shield",
-    }
-]
+  {
+    name: STRINGS.profile.accountInfo,
+    icon: 'user',
+    nav: 'Account',
+  },
+  {
+    name: STRINGS.profile.personalProfile,
+    icon: 'users',
+    nav: 'Profile',
+  },
+  {
+    name: STRINGS.profile.messageCenter,
+    icon: 'inbox',
+    nav: 'Message',
+  },
+  {
+    name: STRINGS.profile.loginAndSecurity,
+    icon: 'shield-halved',
+    nav: 'Security',
+  },
+  {
+    name: STRINGS.profile.dataAndPrivacy,
+    icon: 'file-shield',
+    nav: 'Privacy',
+  },
+] as const;
 
 const ProfileScreen = () => {
-    return(
-        <View style={{backgroundColor:"white" }}>
-            <ScreenHeader value={"Profile"} iconName={"ellipsis"} required={false} />
-            <View style={{backgroundColor: "white", height: heightPercentageToDP(12), width: widthPercentageToDP(26), alignSelf: "center", borderRadius: heightPercentageToDP(6), top: -heightPercentageToDP(6),justifyContent: "center",borderWidth: 0.2}}>
-                <Image source={ImageAssets.manCoinDonut} style={{height: heightPercentageToDP(10), width: widthPercentageToDP(18), alignSelf:"center"}} />
-            </View>
-            <View style={{alignItems: 'center',top: -heightPercentageToDP(4)}}>
-                <TextComponent varient="bold" size="MMedium" value="Rajesh Chodavarapu" />
-                <TextComponent value="@rajesh_nani" color="#438883" />
-            </View>
-            <FlatList 
-            data={data}
-            ItemSeparatorComponent={() => <View style={{height:heightPercentageToDP(0.3)}}/>}
-            renderItem={({item}) => (
-                <TouchableOpacity style={{height: heightPercentageToDP(8),paddingLeft: widthPercentageToDP(10),flexDirection: "row", gap: widthPercentageToDP(4), alignItems: "center"}}>
-                    <View style={{height: heightPercentageToDP(4), width: widthPercentageToDP(10), backgroundColor: "#F0F6F5", alignItems: "center", justifyContent : "center", borderRadius: widthPercentageToDP(2)}}>
-                        <FontAwesome6 
-                        iconStyle="solid"
-                        size={heightPercentageToDP(3)}
-                        name={item.icon}
-                        />
-                    </View>
-                    <TextComponent value={item.name} />
-                </TouchableOpacity>
-            )}
-            />
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { user } = useAuth();
+  const onNavPress = (value: (typeof data)[number]['nav']) => {
+    switch (value) {
+      case 'Security': {
+       return navigation.navigate('Security');
+      }
+      case 'Account': {
+        return navigation.navigate('Account');
+      }
+      case 'Profile': {
+        return navigation.navigate('PersonalProfile');
+      }
+      case 'Message': {
+        return navigation.navigate('Message');
+      }
+      case 'Privacy': {
+        return navigation.navigate('Privacy');
+      }
+      default: {
+        return null;
+      }
+    }
+  };
+  return (
+    <View style={styles.screen}>
+      <ScreenHeader value={STRINGS.profile.title} required={false} />
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.hero}>
+          <View style={styles.avatarWrap}>
+            <Image source={ImageAssets.manCoinDonut} style={styles.avatar} />
+          </View>
+          <TextComponent
+            varient="bold"
+            size="MMedium"
+            value={user?.name ?? ''}
+            color={COLORS.textPrimary}
+          />
+          <TextComponent
+            value={STRINGS.profile.handle}
+            color={COLORS.info}
+            size="Small"
+          />
         </View>
-    )
+
+        <View style={styles.card}>
+          {data.map(item => (
+            <TouchableOpacity
+              key={item.nav}
+              style={styles.row}
+              onPress={() => onNavPress(item.nav)}
+            >
+              <View style={styles.rowIcon}>
+                <FontAwesome6
+                  iconStyle="solid"
+                  size={18}
+                  name={item.icon as any}
+                  color={COLORS.brandStrong}
+                />
+              </View>
+              <TextComponent value={item.name} color={COLORS.textPrimary} />
+              <FontAwesome6
+                iconStyle="solid"
+                name="chevron-right"
+                size={12}
+                color={COLORS.textMuted}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
 };
 
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: COLORS.surfaceMuted,
+  },
+  container: {
+    padding: SPACING.lg,
+    gap: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+  hero: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    gap: SPACING.sm,
+    ...SHADOWS.card,
+  },
+  avatarWrap: {
+    width: 98,
+    height: 98,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surfaceMuted,
+  },
+  avatar: {
+    width: 76,
+    height: 76,
+  },
+  card: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    ...SHADOWS.card,
+  },
+  row: {
+    minHeight: 66,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.border,
+  },
+  rowIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.brandLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 export default ProfileScreen;

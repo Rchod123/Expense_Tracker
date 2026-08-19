@@ -1,5 +1,10 @@
-import { View, Image, StyleSheet, TouchableOpacity, ImageSourcePropType } from 'react-native';
-import commonStyles from '../../utils/commonStyles';
+import {
+  View,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  type ImageSourcePropType,
+} from 'react-native';
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -9,10 +14,11 @@ import { ImageAssets } from '../../assets';
 import { TextComponent } from '../Components/TextComponent';
 import ButtonComponent from '../Components/ButtonComponent';
 import { useState } from 'react';
+import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
 
 const styles = StyleSheet.create({
   paymentImageContainer: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.surface,
     width: widthPercentageToDP(14),
     alignItems: 'center',
     height: heightPercentageToDP(6),
@@ -29,7 +35,7 @@ const styles = StyleSheet.create({
   headerSubContainer: {
     height: heightPercentageToDP(10),
     width: widthPercentageToDP(20),
-    backgroundColor: '#fafafa',
+    backgroundColor: COLORS.surfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: heightPercentageToDP(2),
@@ -49,38 +55,56 @@ const styles = StyleSheet.create({
   paymentRadioContainer: {
     height: heightPercentageToDP(2.5),
     width: widthPercentageToDP(5.5),
-    backgroundColor: 'white',
+    backgroundColor: COLORS.surface,
     borderWidth: 0.4,
     borderRadius: heightPercentageToDP(2),
     justifyContent: 'center',
     alignItems: 'center',
   },
   paymentHighContainer: {
-    backgroundColor: '#438883',
+    backgroundColor: COLORS.info,
     height: heightPercentageToDP(1.5),
     width: widthPercentageToDP(3),
     borderRadius: heightPercentageToDP(1),
   },
+  screen: {
+    flex: 1,
+    backgroundColor: COLORS.surfaceMuted,
+  },
+  content: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    margin: SPACING.lg,
+    marginTop: -heightPercentageToDP(6),
+    borderRadius: RADIUS.xl,
+    paddingHorizontal: widthPercentageToDP(10),
+    paddingVertical: SPACING.xl,
+    ...SHADOWS.card,
+  },
+  sectionDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.border,
+  },
 });
 
 const BillDetailsScreen = () => {
-    const [payment,setPayment] = useState("credit");
+  const [payment, setPayment] = useState('credit');
   const HeaderRender = () => {
     return (
-      <View style={styles.headerMainContainer}>
-        <View style={styles.headerSubContainer}>
-          <Image source={ImageAssets.youtube} />
+        <View style={styles.headerMainContainer}>
+          <View style={styles.headerSubContainer}>
+            <Image source={ImageAssets.youtube} />
+          </View>
+          <View style={{ gap: heightPercentageToDP(1) }}>
+            <TextComponent
+              value={STRINGS.billDetails.merchant}
+              size="MMedium"
+              varient="medium"
+            />
+            <TextComponent value={STRINGS.billDetails.date} />
+          </View>
         </View>
-        <View style={{ gap: heightPercentageToDP(1) }}>
-          <TextComponent
-            value="Youtube Premium"
-            size="MMedium"
-            varient="medium"
-          />
-          <TextComponent value="Feb 28, 2022" />
-        </View>
-      </View>
-    );
+      );
   };
 
   type PriceTagProps = {
@@ -108,9 +132,14 @@ const BillDetailsScreen = () => {
     selected: boolean,
   }
   const PaymentSelection : React.FC<PaymentSelectionProp> = ({name,image,selected}) => (
-    <View style={[styles.paymentMainContainer,
-    selected ? {backgroundColor: "#438883",    borderWidth: 0,}:
-    {    backgroundColor : '#fafafa',borderWidth: 0.4}]}>
+    <View
+      style={[
+        styles.paymentMainContainer,
+        selected
+          ? { backgroundColor: COLORS.info, borderWidth: 0 }
+          : { backgroundColor: COLORS.surfaceMuted, borderWidth: 0.4 },
+      ]}
+    >
       <View
         style={{
           flexDirection: 'row',
@@ -132,37 +161,45 @@ const BillDetailsScreen = () => {
 
   return (
     <>
-      <ScreenHeader value={'Bill Details'} iconName="ellipsis" required={true} />
+      <ScreenHeader
+        value={STRINGS.billDetails.title}
+        iconName="ellipsis"
+        required={true}
+      />
       <View
-        style={{
-          flex: 3,
-          backgroundColor: 'white',
-          paddingHorizontal: widthPercentageToDP(10),
-        }}
+        style={styles.content}
       >
         <HeaderRender />
-        <PriceTag name="Price" amount="11.99" />
-        <PriceTag name="Fee" amount="1.99" />
-        <View style={{ borderWidth: 0.5, borderBottomColor: '#fafafa' }} />
-        <PriceTag name="Total" amount="13.98" />
+        <PriceTag name={STRINGS.billDetails.price} amount="11.99" />
+        <PriceTag name={STRINGS.billDetails.fee} amount="1.99" />
+        <View style={styles.sectionDivider} />
+        <PriceTag name={STRINGS.billDetails.total} amount="13.98" />
         <View style={{ height: heightPercentageToDP(2) }} />
         <TextComponent
-          value="Select Payment method"
+          value={STRINGS.billDetails.paymentMethod}
           size="GMedium"
           varient="medium"
         />
         <View style={{ height: heightPercentageToDP(1) }} />
         <View style={{ gap: heightPercentageToDP(2) }}>
-          <PaymentSelection name="Debit Card" selected={payment === "Debit Card"} image={ImageAssets.creditCard}/>
-          <PaymentSelection name="Paypal" selected={payment === "Paypal"} image={ImageAssets.payPal}/>
+          <PaymentSelection
+            name={STRINGS.billDetails.debitCard}
+            selected={payment === STRINGS.billDetails.debitCard}
+            image={ImageAssets.creditCard}
+          />
+          <PaymentSelection
+            name={STRINGS.billDetails.paypal}
+            selected={payment === STRINGS.billDetails.paypal}
+            image={ImageAssets.payPal}
+          />
         </View>
         <View
           style={{ alignItems: 'center', paddingTop: heightPercentageToDP(2) }}
         >
           <ButtonComponent
-            value={'Pay Now'}
+            value={STRINGS.billDetails.payNow}
             onPress={() => {}}
-            type={'primary'}
+            type="primary"
           />
         </View>
       </View>

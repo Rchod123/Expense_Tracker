@@ -1,0 +1,112 @@
+// context/AuthContext.tsx
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import NetInfo from '@react-native-community/netinfo';
+import {
+  saveAuthData,
+  getStoredToken,
+  getStoredUser,
+  clearAuthData,
+} from '../services/authStorage';
+
+interface AuthContextType {
+  user: any;
+  token: string | null;
+  isLoading: boolean;
+  login: (email: string, pass: string) => Promise<void>;
+  register: (name: string, email: string, pass: string) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+
+// ⚠️ Use your machine's LAN IP for physical device or 10.0.2.2 for Android Emulator
+const API_URL = 'http://localhost:5002/api/auth'; 
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  // Load token on app launch
+  useEffect(() => {
+    const bootstrapAsync = async () => {
+      try {
+        const savedToken = await getStoredToken();
+        const savedUser = await getStoredUser();
+
+        if (savedToken && savedUser) {
+          setToken(savedToken);
+          setUser(savedUser);
+        }
+      } catch (e) {
+        console.error('Failed to load session:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    bootstrapAsync();
+  }, [token]);
+
+  const register = async (name: string, email: string, pass: string) => {
+    const netState = await NetInfo.fetch();
+    if (!netState.isConnected) {
+      throw new Error('Internet connection required to create an account.');
+    }
+
+    const response = await fetch(`${API_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password: pass }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Registration failed');
+    }
+
+    setToken(data.token);
+    setUser(data.user);
+    await saveAuthData(data.token, data.user);
+  };
+
+  const login = async (email: string, pass: string) => {
+    const netState = await NetInfo.fetch();
+
+    // Prevent login attempt if totally offline
+    if (!netState.isConnected) {
+      throw new Error('Offline. Please connect to the internet to log in.');
+    }
+
+    const response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed');
+    }
+
+    setToken(data.token);
+    setUser(data.user);
+    console.log(data.token,data.user,"from the login api");
+    await saveAuthData(data.token, data.user);
+  };
+
+  const logout = async () => {
+    setToken(null);
+    setUser(null);
+    await clearAuthData();
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout, register }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => useContext(AuthContext);

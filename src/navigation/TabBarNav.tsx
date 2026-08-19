@@ -2,21 +2,16 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet, View } from 'react-native';
 import HomePageScreen from '../ui/Screens/HomePageScreen';
-import SplashScreen from '../ui/Screens/SplashScreen';
-import OnBoardingScreen from '../ui/Screens/OnBoardingScreen';
 import { FontAwesome6 } from '@react-native-vector-icons/fontawesome6';
 import { heightPercentageToDP } from '../utils/responsive';
 import MainFloatingButton from '../ui/Components/FloatingButton';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
-import BillDetailsScreen from '../ui/Screens/BillDetailsScreen';
 import WalletScreen from '../ui/Screens/WalletScreen';
 import ProfileScreen from '../ui/Screens/ProfileScreen';
+import type { TabParamList } from '../types/navigation';
+import { StatisticsScreen } from '../ui/Screens/StatisticsScreen';
+import { COLORS } from '../ui/Constants';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<TabParamList>();
 
 const styles = StyleSheet.create({
   tabContainer: {
@@ -24,21 +19,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: 70,
-    backgroundColor: '#F8F7FB',
+    backgroundColor: COLORS.surface,
     borderRadius: 30,
     elevation: 5,
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: 20,
     alignItems: 'center',
-  },
-  container: {
-    width: 100,
-    height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 15,
   },
 });
 
@@ -47,19 +34,14 @@ type TabIconProps = {
   focused: boolean;
 };
 
-const TabIcon: React.FC<TabIconProps> = ({ name, focused }) => {
-
-  return (
-   
-      <FontAwesome6
-        name={name}
-        iconStyle="solid"
-        color={focused ? "blue" :'black'}
-        size={focused ? heightPercentageToDP(3) : heightPercentageToDP(2)}
-      />
-
-  );
-};
+const TabIcon: React.FC<TabIconProps> = ({ name, focused }) => (
+  <FontAwesome6
+    name={name}
+    iconStyle="solid"
+    color={focused ? COLORS.info : COLORS.textPrimary}
+    size={focused ? heightPercentageToDP(3) : heightPercentageToDP(2)}
+  />
+);
 
 const Tabs = () => (
   <Tab.Navigator
@@ -70,7 +52,7 @@ const Tabs = () => (
     }}
   >
     <Tab.Screen
-      name={'Tab1'}
+      name="Dashboard"
       options={{
         tabBarIcon: ({ focused }) => <TabIcon name="house" focused={focused} />,
       }}
@@ -82,13 +64,13 @@ const Tabs = () => (
           <TabIcon name="signal" focused={focused} />
         ),
       }}
-      name={'Tab2'}
-      component={SplashScreen}
+      name="Analytics"
+      component={StatisticsScreen}
     />
 
     <Tab.Screen
       options={{
-        tabBarIcon: ({ focused }) => (
+        tabBarIcon: () => (
           <View
             style={{
               paddingBottom: heightPercentageToDP(8),
@@ -98,7 +80,7 @@ const Tabs = () => (
           </View>
         ),
       }}
-      name={'Tab6'}
+      name="QuickAdd"
       component={HomePageScreen}
     />
     <Tab.Screen
@@ -107,14 +89,14 @@ const Tabs = () => (
           <TabIcon name="wallet" focused={focused} />
         ),
       }}
-      name={'Tab4'}
+      name="Wallet"
       component={WalletScreen}
     />
     <Tab.Screen
       options={{
         tabBarIcon: ({ focused }) => <TabIcon name="user" focused={focused} />,
       }}
-      name={'Tab3'}
+      name="Profile"
       component={ProfileScreen}
     />
   </Tab.Navigator>

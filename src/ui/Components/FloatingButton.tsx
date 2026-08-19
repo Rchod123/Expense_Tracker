@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import React from 'react';
 import { StyleSheet, SafeAreaView, View, Pressable } from 'react-native';
 import Animated, {
@@ -10,6 +10,9 @@ import Animated, {
   withTiming,
   SharedValue,
 } from 'react-native-reanimated';
+import type { RootStackParamList } from '../../types/navigation';
+import type { TransactionType } from '../../types/domain';
+import { COLORS, STRINGS } from '../Constants';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -65,7 +68,7 @@ const FloatingActionButton: React.FC<FloatingButtonProps> = ({
 
 export default function MainFloatingButton() {
   const isExpanded = useSharedValue(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const handlePress = () => {
     isExpanded.value = !isExpanded.value;
   };
@@ -84,10 +87,13 @@ export default function MainFloatingButton() {
     };
   });
 
-  const handlenav = ({ type }: { type: 'Expenses' | 'Income' }) => {
-    navigation.navigate('AddTransaction', {
-      params: type,
-    });
+  const handlenav = (type: TransactionType) => {
+    if (type === 'chat') {
+      navigation.navigate('Chat');
+    } else {
+      navigation.navigate('AddTransaction', { type });
+    }
+
     handlePress();
   };
   return (
@@ -106,17 +112,25 @@ export default function MainFloatingButton() {
             isExpanded={isExpanded}
             index={1}
             onPress={() => {
-              handlenav({ type: 'Expenses' });
+              handlenav('expense');
             }}
-            buttonLetter={'Add Expenses'}
+            buttonLetter={STRINGS.floating.addExpenses}
           />
           <FloatingActionButton
             isExpanded={isExpanded}
             index={2}
             onPress={() => {
-              handlenav({ type: 'Income' });
+              handlenav('income');
             }}
-            buttonLetter={'Add Income'}
+            buttonLetter={STRINGS.floating.addIncome}
+          />
+          <FloatingActionButton
+            isExpanded={isExpanded}
+            index={3}
+            onPress={() => {
+              handlenav('chat');
+            }}
+            buttonLetter={STRINGS.floating.chatWithAI}
           />
         </View>
       </View>
@@ -127,55 +141,62 @@ export default function MainFloatingButton() {
 const mainButtonStyles = StyleSheet.create({
   button: {
     zIndex: 1,
-    height: 56,
-    width: 56,
+    height: 64,
+    width: 64,
     borderRadius: 100,
-    backgroundColor: '#b58df1',
+    backgroundColor: COLORS.purple,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 4,
+    borderColor: COLORS.surface,
   },
   content: {
-    fontSize: 24,
-    color: '#f8f9ff',
+    fontSize: 26,
+    color: COLORS.surface,
   },
 });
 
 const styles = StyleSheet.create({
   mainContainer: {
     position: 'relative',
-    height: 60,
+    height: 84,
     width: '100%',
     display: 'flex',
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
   button: {
-    width: 140,
-    height: 40,
-    backgroundColor: '#82cab2',
+    minWidth: 150,
+    height: 44,
+    backgroundColor: COLORS.surface,
     position: 'absolute',
-
-    borderRadius: 100,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
+    paddingHorizontal: 18,
   },
   buttonContainer: {
     position: 'absolute',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    gap: 10,
   },
   shadow: {
-    shadowColor: '#171717',
-    shadowOffset: { width: -0.5, height: 3.5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    elevation: 5,
   },
   content: {
-    color: '#f8f9ff',
-    fontWeight: 500,
+    color: COLORS.textPrimary,
+    fontWeight: '600',
+    fontSize: 12,
   },
 });

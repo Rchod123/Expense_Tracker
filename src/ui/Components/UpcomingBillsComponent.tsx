@@ -1,53 +1,77 @@
-import { FlatList, Image, TouchableOpacity, View } from "react-native"
-import { ImageAssets } from "../../assets"
-import { heightPercentageToDP, widthPercentageToDP } from "../../utils/responsive";
-import { TextComponent } from "./TextComponent";
+import { FlatList, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ImageAssets } from '../../assets';
+import { COLORS, RADIUS, STRINGS } from '../Constants';
+import { heightPercentageToDP, widthPercentageToDP } from '../../utils/responsive';
+import { TextComponent } from './TextComponent';
 
+type UpcomingBill = {
+  name: string;
+  time: string;
+  icon: keyof typeof ImageAssets;
+};
 
-const data = [
-    {
-        name: "Youtube",
-        time: "Feb 28 2022",
-        icon: "youtube",
-    },
-    {
-        name: "Electricity",
-        time : "Mar 28 2022",
-        icon: "electricity",
-    },
-    {
-        name: "House Rent",
-        time: "Mar 31 2022",
-        icon: "house",
-    },
-    {
-        name: "Spotify",
-        time: "Feb 28 2022",
-        icon: "spotify"
-    }
-]
+const data: UpcomingBill[] = [
+  { name: 'Youtube', time: 'Feb 28 2022', icon: 'youtube' },
+  { name: 'Electricity', time: 'Mar 28 2022', icon: 'electricity' },
+  { name: 'House Rent', time: 'Mar 31 2022', icon: 'house' },
+  { name: 'Spotify', time: 'Feb 28 2022', icon: 'spotify' },
+];
+
+const styles = StyleSheet.create({
+  row: {
+    height: heightPercentageToDP(6),
+    marginVertical: heightPercentageToDP(1),
+    width: widthPercentageToDP(78),
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  left: {
+    flexDirection: 'row',
+    gap: heightPercentageToDP(1),
+  },
+  image: {
+    height: heightPercentageToDP(5),
+    width: widthPercentageToDP(10),
+  },
+  copy: {
+    paddingLeft: widthPercentageToDP(1),
+  },
+  payButton: {
+    height: heightPercentageToDP(4),
+    width: widthPercentageToDP(16),
+    backgroundColor: COLORS.chip,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADIUS.pill,
+  },
+});
 
 const UpcomingBillsComp = () => {
-
-    return(
-        <FlatList 
-         data={data}
-         renderItem={({item}) => (
-            <View style={{height: heightPercentageToDP(6), marginVertical: heightPercentageToDP(1), width: widthPercentageToDP(78), alignItems: "center", flexDirection: "row",justifyContent: "space-between"}}>
-                <View style={{flexDirection: "row", gap: heightPercentageToDP(1)}}>
-                <Image resizeMode="stretch" style={{height: heightPercentageToDP(5), width: widthPercentageToDP(10)}} source={ImageAssets[item.icon]} />
-                <View style={{paddingLeft: widthPercentageToDP(1)}}>
-                    <TextComponent value={item.name} />
-                    <TextComponent value={item.time} color={"#666666"}/>
-                </View>
-                </View>
-                <TouchableOpacity style={{height: heightPercentageToDP(4), width: widthPercentageToDP(16), backgroundColor: "#ECF9F8", alignItems:"center", justifyContent: "center", borderRadius: heightPercentageToDP(2)}}>
-                    <TextComponent value="Pay" />
-                </TouchableOpacity>
+  return (
+    <FlatList
+      data={data}
+      keyExtractor={item => `${item.name}-${item.time}`}
+      renderItem={({ item }) => (
+        <View style={styles.row}>
+          <View style={styles.left}>
+            <Image
+              resizeMode="stretch"
+              style={styles.image}
+              source={ImageAssets[item.icon]}
+            />
+            <View style={styles.copy}>
+              <TextComponent value={item.name} />
+              <TextComponent value={item.time} color={COLORS.textSecondary} />
             </View>
-         )}
-        />
-    )
+          </View>
+          <TouchableOpacity style={styles.payButton}>
+            <TextComponent value={STRINGS.common.pay} />
+          </TouchableOpacity>
+        </View>
+      )}
+    />
+  );
 };
 
 export default UpcomingBillsComp;

@@ -1,5 +1,5 @@
 
 
 export const ColorScheme = {
-    green : "#2A7C76",
-}
+  green: '#2A7C76',
+} as const;
