@@ -43,7 +43,7 @@ export const RegisterScreen = () => {
     try {
       setSubmitting(true);
       await register(name.trim(), email.trim(), password);
-      navigation.navigate('Home');
+      navigation.navigate('Biometric');
     } catch (error: unknown) {
       const message =
         error instanceof Error
@@ -57,7 +57,7 @@ export const RegisterScreen = () => {
 
   return (
     <>
-      <ScreenHeader value={STRINGS.auth.registerButton} required={true} />
+      <ScreenHeader value={STRINGS.auth.registerButton} required showBackButton={false} />
       <AuthScreenFrame
         title={STRINGS.auth.registerTitle}
         subtitle={STRINGS.auth.registerSubtitle}
@@ -90,10 +90,10 @@ export const RegisterScreen = () => {
       />
 
       <ButtonComponent
-        value={submitting ? STRINGS.common.loading : STRINGS.auth.registerButton}
-        onPress={handleRegister}
-        disabled={submitting}
-      />
+          value={submitting ? STRINGS.common.loading : STRINGS.auth.registerButton}
+          onPress={handleRegister}
+          disabled={submitting}
+          type={'primary'}      />
       {submitting && (
         <View style={styles.loadingRow}>
           <ActivityIndicator color={COLORS.info} />

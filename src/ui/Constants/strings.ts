@@ -1,6 +1,7 @@
 export const STRINGS = {
   app: {
     brand: 'mono',
+    name: 'mono expenses',
   },
   onboarding: {
     headline: 'Spend Smarter\nSave More',
@@ -121,6 +122,8 @@ export const STRINGS = {
     uploadImage: 'Upload image',
     enterAmount: 'Enter the amount',
     selectDate: 'Select the date',
+    description: "Description",
+    optional: " (Optional)",
     chooseCategoryTitle: 'Choose a category',
     chooseCategoryMessage:
       'Select a category before saving this transaction.',
@@ -188,6 +191,11 @@ export const STRINGS = {
     inflowLabel: 'Inflow',
     chartHint:
       'Switch between outflow and inflow to compare your money flow.',
+    weeklyTrend: 'Weekly trend',
+    monthlyTrend: 'Monthly trend',
+    noDataTitle: 'No activity in this period',
+    noDataSubtitle: 'Add an income or expense to bring your money story to life.',
+    totalForPeriod: 'Total for this period',
   },
   billDetails: {
     title: 'Bill Details',
@@ -234,6 +242,16 @@ export const STRINGS = {
     transcriptionFailed: 'Transcription failed. Check your server.',
   },
   transaction: {
+    title: 'Transactions',
+    detailsTitle: 'Transaction details',
     emptySubtitle: 'Your saved activity will appear here.',
+    emptyTitle: 'No transactions yet',
+    description: 'Description',
+    date: 'Date',
+    type: 'Type',
+    amount: 'Amount',
+    close: 'Close',
+    incomeAdded: 'Income added',
+    expensePaid: 'Expense paid',
   },
 } as const;

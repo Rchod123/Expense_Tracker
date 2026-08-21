@@ -1,23 +1,27 @@
 import React from 'react';
-import { FlatList, Image, StyleSheet, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, View } from 'react-native';
 import { ImageAssets } from '../../assets';
 import { formatCurrency } from '../../utils/currency';
 import { TextComponent } from './TextComponent';
 import { TransactionType } from '../../types/domain';
 import { COLORS, RADIUS, STRINGS } from '../Constants';
+import { heightPercentageToDP } from '../../utils/responsive';
 
-type TransactionLike = {
+export type TransactionListItem = {
+  id?: string;
   ui: keyof typeof ImageAssets;
   title: string;
   type: TransactionType;
   amount: number;
+  description?: string | null;
   date: string | Date;
 };
 
 type TransactionProps = {
-  transactions?: TransactionLike[];
+  transactions?: TransactionListItem[];
   scrollEnabled?: boolean;
   emptyMessage?: string;
+  onPress?: (transaction: TransactionListItem) => void;
 };
 
 const formatDate = (date: Date | string): string => {
@@ -37,7 +41,8 @@ const formatDate = (date: Date | string): string => {
 const TransactionComp: React.FC<TransactionProps> = ({
   transactions = [],
   scrollEnabled = true,
-  emptyMessage = 'No transactions yet',
+  emptyMessage = STRINGS.transaction.emptyTitle,
+  onPress,
 }) => (
   <FlatList
     data={transactions}
@@ -58,6 +63,13 @@ const TransactionComp: React.FC<TransactionProps> = ({
       const isIncome = item.type === 'income';
       const asset = ImageAssets[item.ui as keyof typeof ImageAssets];
       return (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`View ${item.title} transaction`}
+          onPress={() => onPress?.(item)}
+          disabled={!onPress}
+          style={styles.item}
+        >
         <View style={styles.row}>
           <View style={styles.merchant}>
             <View style={styles.logoWrap}>
@@ -99,6 +111,8 @@ const TransactionComp: React.FC<TransactionProps> = ({
             />
           </View>
         </View>
+         {!!item.description && <TextComponent style={styles.description} size="ExtraSmall" color={COLORS.textMuted} value={item.description} showMore={true} />}
+        </Pressable>
       );
     }}
   />
@@ -112,6 +126,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
   },
+  item: { paddingBottom: heightPercentageToDP(1) },
   merchant: {
     flex: 1,
     minWidth: 0,
@@ -136,6 +151,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
   },
+  description: { alignSelf: 'center', width: '75%' },
 });
 
 export default TransactionComp;

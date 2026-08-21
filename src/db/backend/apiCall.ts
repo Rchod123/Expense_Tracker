@@ -1,7 +1,7 @@
 import Realm, { BSON } from 'realm';
 import { Expense } from '../schema/Expense';
 import { Category } from '../schema/Categories';
-import { getStoredToken } from '../../services/authStorage';
+import { categoriesApi, expensesApi } from '../../services/apiClient';
 
 interface SyncResult {
   success: boolean;
@@ -17,6 +17,7 @@ interface RemoteExpense {
   type?: string;
   ui?: string;
   category?: string;
+  description?: string;
   date: string;
 }
 
@@ -28,23 +29,13 @@ interface RemoteCategory {
   type: string;
 }
 
-const parseSyncResponse = async (
-  response: Response,
-  fallbackIds: string[],
-): Promise<{ syncedIds: string[] }> => {
-  const result = await response.json();
-  return { syncedIds: result.syncedIds ?? fallbackIds };
-};
-
 export const syncUnsyncedExpenses = async (
   realm: Realm,
   userId: string,
-  apiEndpoint: string,
 ): Promise<SyncResult> => {
   const unsyncedExpenses = realm
     .objects(Expense)
     .filtered('userId == $0 AND synced == false', userId);
-  const token = await getStoredToken();
 
   if (unsyncedExpenses.length === 0) {
     return { success: true, syncedCount: 0, failedIds: [] };
@@ -56,27 +47,12 @@ export const syncUnsyncedExpenses = async (
     amount: item.amount,
     type: item.type,
     ui: item.ui,
+    description: item.description,
     date: new Date(item.date).toDateString(),
   }));
 
   try {
-    const response = await fetch(`${apiEndpoint}/expenses/sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ expenses: items }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Expense sync failed with status ${response.status}`);
-    }
-
-    const { syncedIds } = await parseSyncResponse(
-      response,
-      items.map(i => i._id),
-    );
+    const { syncedIds = items.map(i => i._id) } = await expensesApi.sync(items);
     const syncedIdSet = new Set(syncedIds);
 
     realm.write(() => {
@@ -106,7 +82,6 @@ export const syncUnsyncedExpenses = async (
 
 export const syncUnsyncedCategories = async (
   realm: Realm,
-  apiEndpoint: string,
 ): Promise<SyncResult> => {
   const unsyncedCategories = realm
     .objects(Category)
@@ -125,20 +100,7 @@ export const syncUnsyncedCategories = async (
   }));
 
   try {
-    const response = await fetch(`${apiEndpoint}/categories/sync`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categories: items }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Category sync failed with status ${response.status}`);
-    }
-
-    const { syncedIds } = await parseSyncResponse(
-      response,
-      items.map(i => i._id),
-    );
+    const { syncedIds = items.map(i => i._id) } = await categoriesApi.sync(items);
     const syncedIdSet = new Set(syncedIds);
 
     realm.write(() => {
@@ -169,23 +131,9 @@ export const syncUnsyncedCategories = async (
 export const pullExpensesFromMongo = async (
   realm: Realm,
   userId: string,
-  apiEndpoint: string,
 ): Promise<SyncResult> => {
-  const token = await getStoredToken();
   try {
-    const response = await fetch(`${apiEndpoint}/expenses`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-
-    if (!response.ok) {
-      throw new Error(`Expense pull failed with status ${response.status}`);
-    }
-
-    const remoteExpenses: RemoteExpense[] = await response.json();
+    const remoteExpenses = (await expensesApi.list()) as RemoteExpense[];
     realm.write(() => {
       remoteExpenses.forEach(remote => {
         const existing = realm.objectForPrimaryKey(
@@ -205,6 +153,7 @@ export const pullExpensesFromMongo = async (
             amount: remote.amount,
             userId: userId,
             type: remote.type ?? 'expense',
+            description: remote.description,
             ui: remote.ui ?? remote.category ?? 'outflow',
             date: new Date(remote.date),
             synced: true,
@@ -228,16 +177,9 @@ export const pullExpensesFromMongo = async (
 
 export const pullCategoriesFromMongo = async (
   realm: Realm,
-  apiEndpoint: string,
 ): Promise<SyncResult> => {
   try {
-    const response = await fetch(`${apiEndpoint}/categories`);
-
-    if (!response.ok) {
-      throw new Error(`Category pull failed with status ${response.status}`);
-    }
-
-    const remoteCategories: RemoteCategory[] = await response.json();
+    const remoteCategories = (await categoriesApi.list()) as RemoteCategory[];
 
     realm.write(() => {
       remoteCategories.forEach(remote => {
@@ -306,12 +248,11 @@ export const pullCategoriesFromMongo = async (
 export const performFullSync = async (
   realm: Realm,
   userId: string,
-  apiEndpoint: string,
 ): Promise<{ success: boolean; error?: string }> => {
-  const pushExpenses = await syncUnsyncedExpenses(realm, userId, apiEndpoint);
-  const pushCategories = await syncUnsyncedCategories(realm, apiEndpoint);
-  const pullExpenses = await pullExpensesFromMongo(realm, userId, apiEndpoint);
-  const pullCategories = await pullCategoriesFromMongo(realm, apiEndpoint);
+  const pushExpenses = await syncUnsyncedExpenses(realm, userId);
+  const pushCategories = await syncUnsyncedCategories(realm);
+  const pullExpenses = await pullExpensesFromMongo(realm, userId);
+  const pullCategories = await pullCategoriesFromMongo(realm);
 
   const success =
     pushExpenses.success &&

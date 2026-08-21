@@ -63,7 +63,7 @@ const ProfileScreen = () => {
   };
   return (
     <View style={styles.screen}>
-      <ScreenHeader value={STRINGS.profile.title} required={false} />
+      <ScreenHeader value={STRINGS.profile.title} showBackButton={false} />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.hero}>
           <View style={styles.avatarWrap}>

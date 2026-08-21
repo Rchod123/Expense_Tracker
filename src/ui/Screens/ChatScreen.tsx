@@ -23,8 +23,7 @@ import { useQuery } from '@realm/react';
 import { Expense } from '../../db/schema/Expense';
 import { useAuth } from '../../context/authContext';
 import { COLORS, STRINGS } from '../Constants';
-
-const API_URL = 'http://localhost:3000'; // replace with your IP
+import { aiApi } from '../../services/apiClient';
 
 type ChatMessage = {
   role: 'user' | 'assistant';
@@ -52,15 +51,20 @@ export default function ChatScreen() {
     });
   }, []);
 
+  const resetHistory = async () => {
+    await EncryptedStorage.removeItem('chatHistory').finally(() => {
+      navigation.goBack()
+    });
+  };
+
   useEffect(() => {
     Tts.setDefaultLanguage('en-IN');
     Tts.setDefaultPitch(1.2);
 
     // Listen for finish event
-    const finishListener =
-      Tts.addEventListener('tts-finish', () => {
-        setSpeaking(false);
-      }) as { remove?: () => void } | void;
+    const finishListener = Tts.addEventListener('tts-finish', () => {
+      setSpeaking(false);
+    }) as { remove?: () => void } | void;
 
     return () => {
       if (finishListener && 'remove' in finishListener) {
@@ -94,16 +98,11 @@ export default function ChatScreen() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          history: messages,
-          transaction: expense,
-        }),
+      const data = await aiApi.chat({
+        message,
+        history: messages,
+        transaction: expense,
       });
-      const data = await res.json();
       setMessages([
         ...newHistory,
         { role: 'assistant', content: String(data.reply) },
@@ -165,19 +164,11 @@ export default function ChatScreen() {
     });
 
     try {
-      const res = await fetch(`${API_URL}/transcribe`, {
-        method: 'POST',
-        body: formData,
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const data = await res.json();
+      const data = await aiApi.transcribe(formData);
       await sendMessage(String(data.text ?? ''));
     } catch (err) {
       setInput('');
-      Alert.alert(
-        STRINGS.common.error,
-        STRINGS.alerts.transcriptionFailed,
-      );
+      Alert.alert(STRINGS.common.error, STRINGS.alerts.transcriptionFailed);
     }
   };
 
@@ -234,16 +225,24 @@ export default function ChatScreen() {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{STRINGS.chat.title}</Text>
           <View style={styles.headerDot} />
-          <TouchableOpacity
-            style={[styles.iconBtn, speaking && { backgroundColor: COLORS.purple }]}
-            onPress={() => (speaking ? stopSpeaking() : speakReply())}
-          >
-            {' '}
-            <Text style={styles.iconBtnText}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity
+              style={[
+                styles.iconBtn,
+                speaking && { backgroundColor: COLORS.purple },
+              ]}
+              onPress={() => (speaking ? stopSpeaking() : speakReply())}
+            >
               {' '}
-              {speaking ? '🔇' : '🔊'}{' '}
-            </Text>{' '}
-          </TouchableOpacity>
+              <Text style={styles.iconBtnText}>
+                {' '}
+                {speaking ? '🔇' : '🔊'}{' '}
+              </Text>{' '}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => resetHistory()}>
+              <Text style={{ color: COLORS.textMuted }}>Reset</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Message list */}
@@ -259,9 +258,7 @@ export default function ChatScreen() {
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🤖</Text>
               <Text style={styles.emptyTitle}>{STRINGS.chat.emptyTitle}</Text>
-              <Text style={styles.emptySub}>
-                {STRINGS.chat.emptySubtitle}
-              </Text>
+              <Text style={styles.emptySub}>{STRINGS.chat.emptySubtitle}</Text>
             </View>
           }
           renderItem={renderItem}
@@ -269,12 +266,12 @@ export default function ChatScreen() {
 
         {/* Typing indicator */}
         {loading && (
-            <View style={styles.typingRow}>
-              <View style={styles.typingBubble}>
+          <View style={styles.typingRow}>
+            <View style={styles.typingBubble}>
               <Text style={styles.typingText}>{STRINGS.chat.thinking}</Text>
-              </View>
             </View>
-          )}
+          </View>
+        )}
 
         {/* Input row */}
         <View style={styles.inputRow}>

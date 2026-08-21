@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, BackHandler, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import EncryptedStorage from 'react-native-encrypted-storage';
 
 import PinInput from '../Components/PinInput';
 import { RootStackParamList } from '../../types/navigation';
 import { heightPercentageToDP } from '../../utils/responsive';
 import ScreenHeader from '../Components/ScreenHeader';
 import { useBiometric } from '../../utils/hooks';
-import { getDeviceData } from '../../services/authStorage';
+import {
+  getDeviceData,
+  getStoredPin,
+  savePin,
+} from '../../services/authStorage';
 import { COLORS } from '../Constants';
 import { STRINGS } from '../Constants';
 
@@ -31,6 +34,19 @@ const PINScreen = () => {
   }, []);
 
   useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (isCreatingPin) {
+        navigation.navigate('onBoarding');
+      } else {
+        BackHandler.exitApp();
+      }
+      return true;
+    });
+
+    return () => subscription.remove();
+  }, [isCreatingPin, navigation]);
+
+  useEffect(() => {
     const checkBiometric = async () => {
       const device = await getDeviceData();
       if (storedPIN.length > 3 && (device.fingerprint || device.faceId)) {
@@ -44,7 +60,7 @@ const PINScreen = () => {
 
   const checkExistingPin = async () => {
     try {
-      const savedPin = await EncryptedStorage.getItem('userPIN');
+      const savedPin = await getStoredPin();
       if (savedPin) {
         setStoredPIN(savedPin);
         setIsCreatingPin(false);
@@ -58,7 +74,6 @@ const PINScreen = () => {
 
   const handleLogin = useCallback(() => {
     const enteredPin = confirmPin.join('') || pin.join('');
-    console.log(enteredPin, pin);
     if (enteredPin === storedPIN) {
       navigation.navigate('Home');
       return;
@@ -87,7 +102,7 @@ const PINScreen = () => {
     }
 
     try {
-      await EncryptedStorage.setItem('userPIN', firstPin);
+      await savePin(firstPin);
 
       Alert.alert(STRINGS.alerts.pinCreatedTitle, STRINGS.alerts.pinCreated);
 
@@ -107,6 +122,7 @@ const PINScreen = () => {
             : STRINGS.alerts.enterPinTitle
         }
         required={true}
+        showBackButton={false}
       />
       <View style={styles.container}>
         <View style={{ gap: heightPercentageToDP(4) }}>

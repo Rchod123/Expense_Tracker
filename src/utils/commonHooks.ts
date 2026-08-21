@@ -4,8 +4,10 @@ import { Expense } from '../db/schema/Expense';
 import { useAuth } from '../context/authContext';
 
 export const useRealmData = () => {
-  const {user} = useAuth();
-  const expense =useQuery(Expense).filtered('userId == $0', user?.id ?? "").sorted('date', true);
+  const { user } = useAuth();
+  const expense = useQuery(Expense)
+    .filtered('userId == $0', user?.id ?? '')
+    .sorted('date', true);
   const totalIncome = () => {
     const incomeTransactions = expense.filtered("type == 'income'");
     const expenseTransactions = expense.filtered("type == 'expense'");
@@ -43,10 +45,26 @@ const MONTHS = [
   'Dec',
 ];
 
+type ChartPoint = { value: number; label: string };
+
+const toChartPoints = (
+  transactions: Iterable<{ date: Date; amount: number }>,
+  labels: string[],
+  getLabel: (date: Date) => string,
+): ChartPoint[] => {
+  const totals = Object.fromEntries(labels.map(label => [label, 0]));
+  for (const item of transactions) {
+    const label = getLabel(new Date(item.date));
+    if (label in totals) totals[label] += item.amount;
+  }
+  return labels.map(label => ({ value: totals[label], label }));
+};
+
 /**
  * 1. Weekly Data Hook (Current Week Mon-Sun)
  */
 export const useWeeklyExpenseChart = () => {
+  const { user } = useAuth();
   const startOfWeek = useMemo(() => {
     const now = new Date();
     const day = now.getDay(); // 0 = Sun, 1 = Mon ...
@@ -59,52 +77,31 @@ export const useWeeklyExpenseChart = () => {
     return date; // MUST return a native Date object!
   }, []);
 
-  const graphValueConversion = (expenses: any) => {
-    const totals: Record<string, number> = {
-      Mon: 0,
-      Tue: 0,
-      Wed: 0,
-      Thu: 0,
-      Fri: 0,
-      Sat: 0,
-      Sun: 0,
-    };
-
-    for (const item of expenses) {
-      const dayName = DAYS[new Date(item.date).getDay()];
-      totals[dayName] = (totals[dayName] || 0) + item.amount;
-    }
-
-    return Object.keys(totals).map(day => ({
-      value: totals[day] / 100,
-      label: day,
-    }));
-
-    
-  };
-
-  
-
-  // Filter using the Date object as $0
+  const labels = DAYS.slice(1).concat(DAYS[0]);
   const expenses = useQuery(Expense).filtered(
-    'date >= $0 AND type == "expense"',
+    'userId == $0 AND date >= $1 AND type == $2',
+    user?.id ?? '',
     startOfWeek,
+    'expense',
   );
   const income = useQuery(Expense).filtered(
-    'date >= $0 AND type == "income"',//"income"
+    'userId == $0 AND date >= $1 AND type == $2',
+    user?.id ?? '',
     startOfWeek,
+    'income',
   );
 
   return {
-    data: graphValueConversion(expenses),
-    data2: graphValueConversion(income)
-  }
+    data: toChartPoints(expenses, labels, date => DAYS[date.getDay()]),
+    data2: toChartPoints(income, labels, date => DAYS[date.getDay()]),
+  };
 };
 
 /**
  * 2. Monthly Data Hook (Current Year Jan-Dec)
  */
 export const useMonthlyExpenseChart = () => {
+  const { user } = useAuth();
   const { startOfYear, endOfYear } = useMemo(() => {
     const year = new Date().getFullYear();
     return {
@@ -113,49 +110,33 @@ export const useMonthlyExpenseChart = () => {
     };
   }, []);
 
-  const graphValueConversion = (expense:any) => {
-    const totals = MONTHS.reduce(
-      (acc, month) => ({ ...acc, [month]: 0 }),
-      {} as Record<string, number>,
-    );
-
-    for (const item of expense) {
-      const monthName = MONTHS[new Date(item.date).getMonth()];
-      totals[monthName] += item.amount;
-    }
-
-    return Object.keys(totals).map(month => ({
-      value: totals[month] / 100,
-      label: month,
-    }));
-  }
-
-  // Live Query filtered for current year
   const expenses = useQuery(Expense).filtered(
-    'date >= $0 AND date <= $1 AND type == $2',
+    'userId == $0 AND date >= $1 AND date <= $2 AND type == $3',
+    user?.id ?? '',
     startOfYear,
     endOfYear,
-    'expense'
+    'expense',
   );
   const income = useQuery(Expense).filtered(
-    'date >= $0 AND date <= $1 AND type == $2',
+    'userId == $0 AND date >= $1 AND date <= $2 AND type == $3',
+    user?.id ?? '',
     startOfYear,
     endOfYear,
-    'income'
+    'income',
   );
 
   return {
-    data: graphValueConversion(expenses),
-    date2: graphValueConversion(income)
-  }
+    data: toChartPoints(expenses, MONTHS, date => MONTHS[date.getMonth()]),
+    data2: toChartPoints(income, MONTHS, date => MONTHS[date.getMonth()]),
+  };
 };
 
 /**
  * 3. Yearly Data Hook (All-time grouped by Year)
  */
 export const useYearlyExpenseChart = () => {
-  // Query all expenses
-  const expenses = useQuery(Expense);
+  const { user } = useAuth();
+  const expenses = useQuery(Expense).filtered('userId == $0', user?.id ?? '');
 
   return useMemo(() => {
     const totals: Record<string, number> = {};

@@ -13,7 +13,6 @@ import { TextComponent } from './TextComponent';
 import { formatCurrency } from '../../utils/currency';
 import {
   heightPercentageToDP,
-  widthPercentageToDP,
 } from '../../utils/responsive';
 import { COLORS, RADIUS, STRINGS } from '../Constants';
 

@@ -1,10 +1,7 @@
 // services/syncService.ts
-import { getStoredToken } from './authStorage';
+import { expensesApi } from './apiClient';
 
-export const syncUnsyncedExpenses = async (realm: Realm, apiEndpoint: string) => {
-  const token = await getStoredToken();
-  if (!token) return; // Must be authenticated to sync
-
+export const syncUnsyncedExpenses = async (realm: Realm, _apiEndpoint: string) => {
   const unsyncedExpenses = realm.objects('Expense').filtered('synced == false');
   if (unsyncedExpenses.length === 0) return;
 
@@ -17,22 +14,18 @@ export const syncUnsyncedExpenses = async (realm: Realm, apiEndpoint: string) =>
       date: item.date,
     }));
 
-    const response = await fetch(`${apiEndpoint}/expenses/sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`, // Pass Auth Header
-      },
-      body: JSON.stringify({ expenses: payload }),
-    });
-
-    if (response.ok) {
-      realm.write(() => {
-        unsyncedExpenses.forEach((exp: any) => {
-          exp.synced = true;
-        });
+    await expensesApi.sync(payload.map(item => ({
+      ...item,
+      type: 'expense',
+      ui: item.category,
+      description: '',
+      date: new Date().toISOString(),
+    })));
+    realm.write(() => {
+      unsyncedExpenses.forEach((exp: any) => {
+        exp.synced = true;
       });
-    }
+    });
   } catch (error) {
     console.error('Failed to sync expenses:', error);
   }

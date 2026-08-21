@@ -43,19 +43,24 @@ export const useRealmServices = () => {
     amount: number;
     category: string;
     date: string;
+    description: string;
     ui: string;
   }) => {
     try {
+      if (!user?.id) {
+        throw new Error('An authenticated user is required to create a transaction.');
+      }
       let newExpense;
       realm.write(() => {
         newExpense = realm.create(Expense, {
           _id: new BSON.ObjectId(),
           title: data.title,
-          userId: user.id, // 👈 Save local record under active userId
+          userId: user.id,
           amount: Number(data.amount),
           type: data.category,
           ui: data.ui,
           date: new Date(data.date),
+          description: data.description,
           synced: false,
         });
       });

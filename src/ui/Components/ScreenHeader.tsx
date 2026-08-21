@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: widthPercentageToDP(2),
   },
+  iconPlaceholder: { width: 42, height: 42 },
 });
 
 const Icon = ({
@@ -84,7 +85,8 @@ type ScreenHeaderProps = {
   value: string;
   onPress?: () => void;
   iconName?: 'ellipsis';
-  required: boolean;
+  required?: boolean;
+  showBackButton?: boolean;
 };
 
 const ScreenHeader: React.FC<ScreenHeaderProps> = ({
@@ -92,6 +94,7 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   iconName,
   onPress,
   required = false,
+  showBackButton = true,
 }) => {
   const navigation = useNavigation();
   return (
@@ -99,12 +102,20 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({
       <View style={styles.glowLeft} />
       <View style={styles.glowRight} />
       <View style={styles.row}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.iconButton}
-        >
-          <Icon name="chevron-left" size={2} />
-        </TouchableOpacity>
+        {showBackButton ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            onPress={() => {
+              if (navigation.canGoBack()) navigation.goBack();
+            }}
+            style={styles.iconButton}
+          >
+            <Icon name="chevron-left" size={2} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.iconPlaceholder} />
+        )}
         <View style={styles.titleWrap}>
           <TextComponent
             value={value}
@@ -113,12 +124,17 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({
             variant="bold"
           />
         </View>
-        <TouchableOpacity
-          onPress={onPress ?? (() => navigation.goBack())}
-          style={styles.iconButton}
-        >
-          {iconName && <Icon name={iconName} size={3} />}
-        </TouchableOpacity>
+        {iconName || onPress ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={onPress}
+            style={styles.iconButton}
+          >
+            {iconName && <Icon name={iconName} size={3} />}
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.iconPlaceholder} />
+        )}
       </View>
       {required && <View style={styles.radius} />}
     </SafeAreaView>

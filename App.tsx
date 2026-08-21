@@ -22,6 +22,7 @@ import AccountInfoScreen from "./src/ui/Screens/AccountInfoScreen";
 import PersonalProfileScreen from "./src/ui/Screens/ProfileInfoScreen";
 import MessageCenterScreen from "./src/ui/Screens/MessageCenterScreen";
 import DataPrivacyScreen from "./src/ui/Screens/DataPrivacyScreen";
+import TransactionsScreen from './src/ui/Screens/TransactionsScreen';
 
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -41,6 +42,7 @@ const App = () => {
       <Stack.Screen name="onBoarding" component={OnBoardingScreen} options={{ gestureEnabled: false }}/>
       <Stack.Screen name="Home" component={Tabs} options={{ gestureEnabled: false }}/>
       <Stack.Screen name="AddTransaction" component={AddTransactionScreen} options={{ gestureEnabled: false }}/>
+      <Stack.Screen name="Transactions" component={TransactionsScreen} />
       <Stack.Screen name="Login" component={LoginScreen}/>
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Security" component={SecurityScreen} />

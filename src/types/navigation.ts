@@ -8,6 +8,7 @@ export type RootStackParamList = {
   Register: undefined;
   Home: NavigatorScreenParams<TabParamList> | undefined;
   AddTransaction: { type: TransactionType };
+  Transactions: undefined;
   Security: undefined;
   Biometric: undefined;
   Chat: undefined;

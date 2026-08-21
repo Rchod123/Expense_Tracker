@@ -28,7 +28,7 @@ export const LoginScreen = () => {
     try {
       setSubmitting(true);
       await login(email, password);
-      navigation.navigate('Home');
+      navigation.navigate('Biometric');
     } catch (error: unknown) {
       const message =
         error instanceof Error
@@ -42,7 +42,7 @@ export const LoginScreen = () => {
 
   return (
     <>
-      <ScreenHeader value={STRINGS.auth.loginButton} required={true} />
+      <ScreenHeader value={STRINGS.auth.loginButton} required showBackButton={false} />
       <AuthScreenFrame
         title={STRINGS.auth.loginTitle}
         subtitle={STRINGS.auth.loginSubtitle}

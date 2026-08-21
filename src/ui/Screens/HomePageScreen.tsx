@@ -17,6 +17,8 @@ import { TextComponent } from '../Components/TextComponent';
 import BalanceCard from '../Components/BalanceCard';
 import { useExit } from '../../utils/hooks';
 import TransactionComp from '../Components/TransactionComponent';
+import type { TransactionListItem } from '../Components/TransactionComponent';
+import TransactionDetailsModal from '../Components/TransactionDetailsModal';
 import type { MonthlySummary } from '../../types/domain';
 import type { RootStackParamList } from '../../types/navigation';
 import { useQuery } from '@realm/react';
@@ -39,6 +41,7 @@ const HomePageScreen = () => {
   const expense = useQuery(Expense)
     .filtered('userId == $0', user?.id ?? '')
     .sorted('date', true);
+
   const isFocused = useIsFocused();
   const { totalIncome } = useRealmData();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -49,6 +52,7 @@ const HomePageScreen = () => {
     expenses: 0,
     balance: 0,
   });
+  const [selectedTransaction, setSelectedTransaction] = useState<TransactionListItem | null>(null);
 
   useEffect(() => {
     void runSync();
@@ -225,7 +229,11 @@ const HomePageScreen = () => {
               color={COLORS.textMuted}
             />
           </View>
-          <Pressable accessibilityRole="button" hitSlop={8}>
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => navigation.navigate('Transactions')}
+          >
             <TextComponent
               value={STRINGS.home.seeAll}
               size="Small"
@@ -242,13 +250,18 @@ const HomePageScreen = () => {
               title: item.title,
               type: item.type as any,
               amount: item.amount,
+              description: item.description,
               date: item.date,
             }))}
             scrollEnabled={false}
+            onPress={setSelectedTransaction}
           />
         </View>
       </ScrollView>
-     
+      <TransactionDetailsModal
+        transaction={selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
+      />
     </View>
   );
 };

@@ -4,6 +4,8 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 const TOKEN_KEY = 'user_jwt_token';
 const USER_KEY = 'user_profile_data';
 const DEVICE_LOCAL = 'user_local_device';
+const CHAT_HISTORY = 'chatHistory';
+const PIN_KEY = 'userPIN';
 
 export const saveAuthData = async (token: string, user: object) => {
   try {
@@ -59,11 +61,26 @@ export const getStoredUser = async () => {
   }
 };
 
+export const savePin = async (pin: string) => {
+  await EncryptedStorage.setItem(PIN_KEY, pin);
+};
+
+export const getStoredPin = async (): Promise<string | null> => {
+  return EncryptedStorage.getItem(PIN_KEY);
+};
+
+export const clearPin = async () => {
+  await EncryptedStorage.removeItem(PIN_KEY);
+};
+
 export const clearAuthData = async () => {
   try {
+    await clearPin();
     await EncryptedStorage.removeItem(TOKEN_KEY);
     await EncryptedStorage.removeItem(USER_KEY);
     await EncryptedStorage.removeItem(DEVICE_LOCAL);
+    await EncryptedStorage.removeItem(CHAT_HISTORY);
+    
   } catch (error) {
     console.error('Failed to clear auth data:', error);
   }

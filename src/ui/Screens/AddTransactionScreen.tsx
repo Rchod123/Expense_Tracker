@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Image,
   Modal,
   Platform,
+  ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -37,14 +39,19 @@ import { useQuery, useRealm } from '@realm/react';
 import { Category as Categories } from '../../db/schema/Categories';
 import { useRealmServices } from '../../utils/storageFunctions';
 import { pullCategoriesFromMongo } from '../../db/backend/apiCall';
-import { API_ENDPOINT } from '../../config/api';
+import { aiApi } from '../../services/apiClient';
 import NetInfo from '@react-native-community/netinfo';
-import {CameraOptions, ImageLibraryOptions, launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import {
+  CameraOptions,
+  ImageLibraryOptions,
+  type Asset,
+  launchCamera,
+  launchImageLibrary,
+} from 'react-native-image-picker';
 import { COLORS, STRINGS } from '../Constants';
 
 const styles = StyleSheet.create({
   cardContainer: {
-    height: heightPercentageToDP(62),
     backgroundColor: COLORS.surface,
     marginHorizontal: widthPercentageToDP(4),
     position: 'absolute',
@@ -147,7 +154,11 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: COLORS.overlay,
   },
-  customSheet: { borderRadius: 24, padding: 20, backgroundColor: COLORS.surface },
+  customSheet: {
+    borderRadius: 24,
+    padding: 20,
+    backgroundColor: COLORS.surface,
+  },
   customSheetCopy: { marginTop: 5, marginBottom: 18 },
   customCategoryInput: {
     height: 50,
@@ -196,6 +207,8 @@ const AddTransactionScreen = () => {
   const [customCategoryName, setCustomCategoryName] = useState('');
   const [isCreatingCategory, setCreatingCategory] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<
     Category | undefined
   >();
@@ -204,7 +217,7 @@ const AddTransactionScreen = () => {
   const { createExpense, createCategory } = useRealmServices();
   const [isSaving, setSaving] = useState(false);
   const isIncome = params.type === 'income';
-  const [_imageUri, setImageUri] = useState<string | null>(null);
+  const [_imageUri, setImageUri] = useState<Asset | null>(null);
   useEffect(() => {
     if (category.length > 0) {
       setCategories(
@@ -232,7 +245,7 @@ const AddTransactionScreen = () => {
         netState.isInternetReachable !== false &&
         !cancelled
       ) {
-        await pullCategoriesFromMongo(relam, API_ENDPOINT);
+        await pullCategoriesFromMongo(relam);
       }
       if (!cancelled) {
         setLoadingCategories(false);
@@ -250,15 +263,12 @@ const AddTransactionScreen = () => {
     if (Platform.OS === 'android') {
       setDatePickerVisible(false);
     }
-
-    console.log(nextDate);
     if (event.type === 'set' && nextDate) {
       setSelectedDate(nextDate);
       console.log(moment(nextDate).format('YYYY-MM-DD'));
       setDate(moment(nextDate).format('YYYY-MM-DD'));
     }
   };
- 
 
   const handlePickImage = () => {
     const options: ImageLibraryOptions = {
@@ -274,7 +284,7 @@ const AddTransactionScreen = () => {
       } else if (response.errorCode) {
         Alert.alert(STRINGS.common.error, response.errorMessage);
       } else if (response.assets && response.assets.length > 0) {
-        setImageUri(response.assets[0].uri ?? null);
+        setImageUri(response.assets[0] ?? null);
       }
     });
   };
@@ -291,9 +301,50 @@ const AddTransactionScreen = () => {
       } else if (response.errorCode) {
         Alert.alert(STRINGS.common.error, response.errorMessage);
       } else if (response.assets && response.assets.length > 0) {
-        setImageUri(response.assets[0].uri ?? null);
+        setImageUri(response.assets[0] ?? null);
       }
     });
+  };
+
+  const uploadReceipt = async () => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('receipt', {
+        uri:
+          Platform.OS === 'android'
+            ? `file://${_imageUri?.uri}`
+            : _imageUri?.uri,
+        type: _imageUri?.type || 'image/jpeg',
+        name: _imageUri?.fileName || 'receipt.jpg',
+      });
+
+      const json = await aiApi.ocrReceipt(formData);
+      if (json.success) {
+        const resp = json.data;
+        const matchedCategory = categories.find(item =>
+          item.name.toLowerCase() === resp?.category_guess?.toLowerCase(),
+        );
+        setSelectedCategory(matchedCategory);
+        setDate(resp?.date ?? today());
+        const fullMessage = (resp?.line_items ?? []).map(item => item.name).join(',');
+        setDescription(`Shop Name: ${resp?.merchant ?? ''}\nProduct Details: ${fullMessage}`);
+        setAmount(String(resp?.total_amount ?? ''));
+        console.log(json.data); // pass extracted fields up to your expense form
+        setImageUri(null);
+      } else {
+        Alert.alert(
+          'OCR failed',
+          'Could not read the receipt. Please enter details manually.',
+        );
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+
+      Alert.alert('Error', 'Failed to upload receipt. Check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const submitTransaction = async () => {
@@ -320,6 +371,7 @@ const AddTransactionScreen = () => {
         amount: Math.round(parsedAmount * 100) || 0,
         category: params.type || STRINGS.addTransaction.defaultCategory,
         date: date,
+        description: description ?? ' ',
         ui: selectedCategory.ui,
       });
       navigation.goBack();
@@ -352,10 +404,6 @@ const AddTransactionScreen = () => {
     }
   };
 
-  const onEllipseClick = () => {
-    setOnEllipse(true);
-  };
-
   const categoryAsset = selectedCategory
     ? ImageAssets[
         (selectedCategory.iconKey ??
@@ -366,165 +414,210 @@ const AddTransactionScreen = () => {
   return (
     <View style={{ backgroundColor: COLORS.surface, flex: 1 }}>
       <ScreenHeader
-        value={isIncome ? STRINGS.addTransaction.addIncome : STRINGS.addTransaction.addExpense}
+        value={
+          isIncome
+            ? STRINGS.addTransaction.addIncome
+            : STRINGS.addTransaction.addExpense
+        }
         iconName="ellipsis"
         required={false}
-        onPress={onEllipseClick}
+        onPress={() => setOnEllipse(true)}
       />
-      <View style={styles.cardContainer}>
-        <View style={{ marginHorizontal: widthPercentageToDP(4) }}>
-          <BasicSkeleton name={STRINGS.addTransaction.category}>
-            <TouchableOpacity
-              disabled={isLoadingCategories}
-              onPress={() => setCategoryListVisible(value => !value)}
-              style={styles.categoryField}
-            >
-              <View style={styles.categoryLeft}>
-                {categoryAsset && (
-                  <Image source={categoryAsset} style={styles.categoryImage} />
-                )}
-                <TextComponent
-                  value={
-                    selectedCategory?.name ??
-                    (isLoadingCategories
-                      ? STRINGS.addTransaction.loadingCategories
-                      : STRINGS.addTransaction.selectCategory)
-                  }
-                  color={selectedCategory ? 'black' : '#8A9595'}
-                />
-              </View>
-              <FontAwesome6
-                name={isCategoryListVisible ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                iconStyle="solid"
-                color="#52605F"
-              />
-            </TouchableOpacity>
-          </BasicSkeleton>
-          {isCategoryListVisible && (
-            <FlatList
-              data={categories}
-              style={styles.categoryList}
-              keyExtractor={item => String(item.id + item.name)}
-              renderItem={({ item }) => {
-                const asset = ImageAssets[item.ui as keyof typeof ImageAssets];
-                return (
-                  <TouchableOpacity
-                    onPress={() => {
-                      setSelectedCategory(item);
-                      setCategoryListVisible(false);
-                    }}
-                    style={styles.categoryOption}
-                  >
-                    {asset && (
-                      <Image source={asset} style={styles.optionImage} />
-                    )}
-                    <TextComponent value={item.name} />
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          )}
-          {isCategoryListVisible && (
-            <TouchableOpacity
-              onPress={() => {
-                setCategoryListVisible(false);
-                setCustomCategoryVisible(true);
-              }}
-              style={styles.customCategoryOption}
-            >
-              <View style={styles.customCategoryIcon}>
+      <ScrollView showsVerticalScrollIndicator={false} style={[styles.cardContainer ,{ paddingBottom: heightPercentageToDP(6)}]}>
+        <View >
+          <View style={{ marginHorizontal: widthPercentageToDP(4) }}>
+            <BasicSkeleton name={STRINGS.addTransaction.category}>
+              <TouchableOpacity
+                disabled={isLoadingCategories}
+                onPress={() => setCategoryListVisible(value => !value)}
+                style={styles.categoryField}
+              >
+                <View style={styles.categoryLeft}>
+                  {categoryAsset && (
+                    <Image
+                      source={categoryAsset}
+                      style={styles.categoryImage}
+                    />
+                  )}
+                  <TextComponent
+                    value={
+                      selectedCategory?.name ??
+                      (isLoadingCategories
+                        ? STRINGS.addTransaction.loadingCategories
+                        : STRINGS.addTransaction.selectCategory)
+                    }
+                    color={selectedCategory ? 'black' : '#8A9595'}
+                  />
+                </View>
                 <FontAwesome6
-                  name="plus"
+                  name={isCategoryListVisible ? 'chevron-up' : 'chevron-down'}
+                  size={18}
                   iconStyle="solid"
-                  size={13}
-                  color="#176B65"
+                  color="#52605F"
                 />
-              </View>
-              <View>
-                <TextComponent
-                  value={STRINGS.addTransaction.customCategory}
-                  size="Small"
-                  varient="bold"
-                  color={COLORS.brandStrong}
-                />
-                <TextComponent
-                  value={`${STRINGS.addTransaction.categorySavedAs} ${
-                    isIncome ? STRINGS.common.income : STRINGS.common.expense
-                  } category`}
-                  size="ExtraSmall"
-                  color={COLORS.textMuted}
-                />
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
+              </TouchableOpacity>
+            </BasicSkeleton>
+            {isCategoryListVisible && (
+              <FlatList
+                data={categories}
+                style={styles.categoryList}
+                keyExtractor={item => String(item.id + item.name)}
+                renderItem={({ item }) => {
+                  const asset =
+                    ImageAssets[item.ui as keyof typeof ImageAssets];
+                  return (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedCategory(item);
+                        setCategoryListVisible(false);
+                      }}
+                      style={styles.categoryOption}
+                    >
+                      {asset && (
+                        <Image source={asset} style={styles.optionImage} />
+                      )}
+                      <TextComponent value={item.name} />
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            )}
+            {isCategoryListVisible && (
+              <TouchableOpacity
+                onPress={() => {
+                  setCategoryListVisible(false);
+                  setCustomCategoryVisible(true);
+                }}
+                style={styles.customCategoryOption}
+              >
+                <View style={styles.customCategoryIcon}>
+                  <FontAwesome6
+                    name="plus"
+                    iconStyle="solid"
+                    size={13}
+                    color="#176B65"
+                  />
+                </View>
+                <View>
+                  <TextComponent
+                    value={STRINGS.addTransaction.customCategory}
+                    size="Small"
+                    varient="bold"
+                    color={COLORS.brandStrong}
+                  />
+                  <TextComponent
+                    value={`${STRINGS.addTransaction.categorySavedAs} ${
+                      isIncome ? STRINGS.common.income : STRINGS.common.expense
+                    } category`}
+                    size="ExtraSmall"
+                    color={COLORS.textMuted}
+                  />
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
           <CustomInput
             name={STRINGS.addTransaction.enterAmount}
-          placeholder={STRINGS.addTransaction.enterAmount}
-          value={amount}
-          keyboardType="decimal-pad"
-          onChangeText={setAmount}
-        />
+            placeholder={STRINGS.addTransaction.enterAmount}
+            value={amount}
+            keyboardType="decimal-pad"
+            onChangeText={setAmount}
+          />
           <CustomInput
             name={STRINGS.addTransaction.selectDate}
-          placeholder={STRINGS.addTransaction.selectDate}
-          value={date}
-          rightType="icon"
-          rightValue="calendar"
-          onRightPress={() => setDatePickerVisible(true)}
-          onChangeText={setDate}
-        />
-        <View style={styles.submit}>
-          <ButtonComponent
-            value={
-              isSaving
-                ? STRINGS.addTransaction.saving
-                : isIncome
+            placeholder={STRINGS.addTransaction.selectDate}
+            value={date}
+            rightType="icon"
+            rightValue="calendar"
+            onRightPress={() => setDatePickerVisible(true)}
+            onChangeText={setDate}
+          />
+
+          <CustomInput
+            name={STRINGS.addTransaction.description}
+            placeholder={
+              STRINGS.addTransaction.description +
+              STRINGS.addTransaction.optional
+            }
+            value={description}
+            onChangeText={setDescription}
+          />
+          <View style={styles.submit}>
+            <ButtonComponent
+              value={
+                isSaving
+                  ? STRINGS.addTransaction.saving
+                  : isIncome
                   ? STRINGS.addTransaction.addIncome
                   : STRINGS.addTransaction.addExpense
-            }
-            onPress={submitTransaction}
-            type="primary"
-            disabled={isSaving || isLoadingCategories}
-          />
-        </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+              }
+              onPress={submitTransaction}
+              type="primary"
+              disabled={isSaving || isLoadingCategories}
+            />
+          </View>
 
-        
-        <TouchableOpacity
-          style={{
-            alignItems: 'center',
-            paddingVertical: heightPercentageToDP(3),
-          }}
-          onPress={handleTakePhoto}
-        >
-          <FontAwesome6
-            name="camera"
-            iconStyle="solid"
-            color={'black'}
-            size={heightPercentageToDP(3)}
-          />
-          <TextComponent value={STRINGS.addTransaction.openCamera} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{
-            alignItems: 'center',
-            paddingVertical: heightPercentageToDP(3),
-          }}
-          onPress={handlePickImage}
-        >
-          <FontAwesome6
-            name="upload"
-            iconStyle="solid"
-            color={'black'}
-            size={heightPercentageToDP(3)}
-          />
-          <TextComponent value={STRINGS.addTransaction.uploadImage} />
-        </TouchableOpacity>
+          {_imageUri?.uri && (
+            <View style={{ alignItems: 'center' }}>
+              <Image
+                height={heightPercentageToDP(10)}
+                width={widthPercentageToDP(50)}
+                source={{ uri: _imageUri.uri }}
+              />
+            </View>
+          )}
+          {_imageUri?.uri ? (
+            <View
+              style={{
+                paddingVertical: heightPercentageToDP(5),
+                alignItems: 'center',
+              }}
+            >
+              <ButtonComponent
+                value="upload"
+                type="primary"
+                disabled={loading}
+                onPress={uploadReceipt}
+              />
+            </View>
+          ) : (
+            <View
+              style={{ flexDirection: 'row', justifyContent: 'space-around' }}
+            >
+              <TouchableOpacity
+                style={{
+                  alignItems: 'center',
+                  paddingVertical: heightPercentageToDP(3),
+                }}
+                onPress={handleTakePhoto}
+              >
+                <FontAwesome6
+                  name="camera"
+                  iconStyle="solid"
+                  color={'black'}
+                  size={heightPercentageToDP(3)}
+                />
+                <TextComponent value={STRINGS.addTransaction.openCamera} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  alignItems: 'center',
+                  paddingVertical: heightPercentageToDP(3),
+                }}
+                onPress={handlePickImage}
+              >
+                <FontAwesome6
+                  name="upload"
+                  iconStyle="solid"
+                  color={'black'}
+                  size={heightPercentageToDP(3)}
+                />
+                <TextComponent value={STRINGS.addTransaction.uploadImage} />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
-      </View>
-
+      </ScrollView>
       {isDatePickerVisible && Platform.OS === 'android' && (
         <DateTimePicker
           mode="date"
@@ -584,8 +677,8 @@ const AddTransactionScreen = () => {
             <View style={styles.customSheetCopy}>
               <TextComponent
                 value={`${STRINGS.addTransaction.categorySavedAs} ${
-                    isIncome ? STRINGS.common.income : STRINGS.common.expense
-                  } category.`}
+                  isIncome ? STRINGS.common.income : STRINGS.common.expense
+                } category.`}
                 size="Small"
                 color="#62716F"
               />
@@ -642,22 +735,27 @@ const AddTransactionScreen = () => {
       <Modal
         transparent
         animationType="fade"
-        visible={onEllipse}
+        visible={onEllipse || loading}
         onRequestClose={() => setOnEllipse(false)}
       >
         <View style={styles.customSheetBackdrop}>
-          <TouchableOpacity
-            onPress={() => {
-              setSelectedCategory(undefined);
-              setAmount('');
-              setDate(today);
-              setOnEllipse(false);
-            }}
-          >
-            <View style={styles.customSheet}>
-              <TextComponent value={STRINGS.common.reset} />
-            </View>
-          </TouchableOpacity>
+          {!loading ? (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedCategory(undefined);
+                setAmount('');
+                setDate(today);
+                setOnEllipse(false);
+                setImageUri(null);
+              }}
+            >
+              <View style={styles.customSheet}>
+                <TextComponent value={STRINGS.common.reset} />
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <ActivityIndicator size={'large'} />
+          )}
         </View>
       </Modal>
     </View>

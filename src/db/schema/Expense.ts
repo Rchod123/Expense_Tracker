@@ -9,6 +9,7 @@ export class Expense extends Realm.Object<Transaction[]> {
   amount!: number;
   type!: string;
   ui!: string;
+  description!: string;
   date!: Date;
   synced!: boolean; // Used to track offline-to-online sync status
 
@@ -21,6 +22,7 @@ export class Expense extends Realm.Object<Transaction[]> {
       title: 'string',
       amount: 'double',
       ui: 'string',
+      description: 'string',
       type: 'string',
       date: 'date',
       synced: { type: 'bool', default: false },

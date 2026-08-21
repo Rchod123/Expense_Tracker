@@ -1,5 +1,10 @@
-import React from 'react';
-import { Text, type TextProps as RNTextProps } from 'react-native';
+import React, { useState } from 'react';
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  type TextProps as RNTextProps,
+} from 'react-native';
 
 type Variant = 'medium' | 'bold' | 'thin' | 'default';
 type Size =
@@ -18,6 +23,7 @@ type Props = {
   varient?: Variant;
   color?: string;
   size?: Size;
+  showMore?: boolean;
   style?: RNTextProps['style'];
 } & Omit<RNTextProps, 'children' | 'style'>;
 
@@ -45,24 +51,34 @@ export const TextComponent: React.FC<Props> = ({
   varient,
   color = '#000',
   size = 'Medium',
+  showMore = false,
   style,
   ...props
 }) => {
   const resolvedVariant = variant ?? varient ?? 'default';
+  const [showButton, setShowButton] = useState(false);
 
   return (
-    <Text
-      {...props}
-      style={[
-        {
-          color,
-          fontSize: fontSizeMap[size],
-          fontWeight: fontWeightMap[resolvedVariant],
-        },
-        style,
-      ]}
-    >
-      {value}
-    </Text>
+    <View style={{ flexDirection: 'row' }}>
+      <Text
+        {...props}
+        numberOfLines={showButton ? undefined: 1}
+        style={[
+          {
+            color,
+            fontSize: fontSizeMap[size],
+            fontWeight: fontWeightMap[resolvedVariant],
+          },
+          style,
+        ]}
+      >
+        {value}
+      </Text>
+      {showMore && value?.length > 30 && (
+        <TouchableOpacity   onPress={() => setShowButton((prev) => !prev)}>
+          <Text style={{alignSelf: "flex-end",color: color}}>{showButton ? 'Show Less': 'Show More'}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 };

@@ -1,11 +1,12 @@
 {
-  "name": "myTodot",
+  "name": "mono-expenses",
   "version": "0.0.1",
   "private": true,
   "scripts": {
     "postinstall": "patch-package",
     "android": "react-native run-android",
     "pod": "cd ios && pod install",
+    "backend":"cd backend && node server.js",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",

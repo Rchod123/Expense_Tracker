@@ -7,6 +7,7 @@ import {
   getStoredUser,
   clearAuthData,
 } from '../services/authStorage';
+import { authApi } from '../services/apiClient';
 
 interface AuthContextType {
   user: any;
@@ -20,8 +21,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 // ⚠️ Use your machine's LAN IP for physical device or 10.0.2.2 for Android Emulator
-const API_URL = 'http://localhost:5002/api/auth'; 
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<any>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -53,17 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Internet connection required to create an account.');
     }
 
-    const response = await fetch(`${API_URL}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password: pass }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Registration failed');
-    }
+    const data = await authApi.register(name, email, pass);
 
     setToken(data.token);
     setUser(data.user);
@@ -78,21 +67,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Offline. Please connect to the internet to log in.');
     }
 
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: pass }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
-    }
+    const data = await authApi.login(email, pass);
 
     setToken(data.token);
     setUser(data.user);
-    console.log(data.token,data.user,"from the login api");
     await saveAuthData(data.token, data.user);
   };
 

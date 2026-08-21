@@ -163,7 +163,6 @@ const BillDetailsScreen = () => {
     <>
       <ScreenHeader
         value={STRINGS.billDetails.title}
-        iconName="ellipsis"
         required={true}
       />
       <View

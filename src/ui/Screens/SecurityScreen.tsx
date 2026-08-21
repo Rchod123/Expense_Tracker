@@ -174,7 +174,7 @@ const SecurityScreen = () => {
           index: 0,
           routes: [
             {
-              name: 'Splash',
+              name: 'Login',
             },
           ],
         });

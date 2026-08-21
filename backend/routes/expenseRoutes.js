@@ -23,6 +23,7 @@ router.post('/sync',authenticateToken, async (req, res) => {
             type: item.type,
             ui: item.ui,
             date: new Date(item.date),
+            description: item.description,
             userId: userId,
           },
         },

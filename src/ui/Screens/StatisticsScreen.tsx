@@ -14,6 +14,7 @@ import {
   useWeeklyExpenseChart,
 } from '../../utils/commonHooks';
 import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
+import { formatCurrency } from '../../utils/currency';
 
 const chartFilters = [STRINGS.statistics.weekly, STRINGS.statistics.monthly];
 const graphFilters = [STRINGS.statistics.outflow, STRINGS.statistics.inflow];
@@ -32,15 +33,18 @@ export const StatisticsScreen = () => {
   const chartData =
     graphSelect === STRINGS.statistics.outflow
       ? activeData.data
-      : 'data2' in activeData
-        ? activeData.data2
-        : activeData.date2;
+      : activeData.data2;
 
   const stats = useMemo(() => {
-    const outflow = weekly.data.reduce((sum, item) => sum + item.value, 0);
-    const inflow = weekly.data2.reduce((sum, item) => sum + item.value, 0);
+    const outflow = activeData.data.reduce((sum, item) => sum + item.value, 0);
+    const inflow = activeData.data2.reduce((sum, item) => sum + item.value, 0);
     return { outflow, inflow };
-  }, [weekly.data, weekly.data2]);
+  }, [activeData.data, activeData.data2]);
+
+  const selectedTotal = graphSelect === STRINGS.statistics.outflow
+    ? stats.outflow
+    : stats.inflow;
+  const hasChartData = chartData.some(item => item.value > 0);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -139,8 +143,8 @@ export const StatisticsScreen = () => {
               <TextComponent
                 value={
                   selectedRange === STRINGS.statistics.weekly
-                    ? 'Weekly trend'
-                    : 'Monthly trend'
+                    ? STRINGS.statistics.weeklyTrend
+                    : STRINGS.statistics.monthlyTrend
                 }
                 size="ExtraSmall"
                 color={COLORS.textSecondary}
@@ -156,35 +160,47 @@ export const StatisticsScreen = () => {
             </View>
           </View>
 
-          <LineChart
-            data={chartData}
-            width={widthPercentageToDP(82)}
-            height={heightPercentageToDP(30)}
-            curved
-            areaChart
-            isAnimated
-            animationDuration={900}
-            hideRules
-            hideYAxisText={false}
-            hideDataPoints={false}
-            dataPointsColor1={COLORS.brandStrong}
-            color1={COLORS.brandStrong}
-            startFillColor1={COLORS.brandLight}
-            endFillColor1={COLORS.surface}
-            startOpacity1={0.95}
-            endOpacity1={0.15}
-            showValuesAsDataPointsText={false}
-            yAxisTextStyle={{ color: COLORS.textMuted }}
-            xAxisLabelTextStyle={{ color: COLORS.textMuted }}
-            xAxisColor={COLORS.border}
-            yAxisColor={COLORS.border}
-            rulesColor={COLORS.border}
-            focusEnabled
-            showTextOnFocus
-            textColor1={COLORS.brandStrong}
-            initialSpacing={10}
-            spacing={40}
-          />
+          <View style={styles.chartTotal}>
+            <TextComponent value={STRINGS.statistics.totalForPeriod} size="ExtraSmall" color={COLORS.textSecondary} />
+            <TextComponent value={formatCurrency(selectedTotal)} size="MMedium" variant="bold" color={COLORS.brandStrong} />
+          </View>
+          {hasChartData ? (
+            <LineChart
+              data={chartData}
+              width={widthPercentageToDP(82)}
+              height={heightPercentageToDP(30)}
+              curved
+              areaChart
+              isAnimated
+              animationDuration={900}
+              hideRules
+              hideDataPoints={false}
+              dataPointsColor1={COLORS.brandStrong}
+              color1={COLORS.brandStrong}
+              startFillColor1={COLORS.brandLight}
+              endFillColor1={COLORS.surface}
+              startOpacity1={0.95}
+              endOpacity1={0.15}
+              yAxisTextStyle={{ color: COLORS.textMuted }}
+              xAxisLabelTextStyle={{ color: COLORS.textMuted }}
+              xAxisColor={COLORS.border}
+              yAxisColor={COLORS.border}
+              rulesColor={COLORS.border}
+              focusEnabled
+              showTextOnFocus
+              textColor1={COLORS.brandStrong}
+              initialSpacing={10}
+              spacing={40}
+            />
+          ) : (
+            <View style={styles.emptyChart}>
+              <View style={styles.emptyChartIcon}>
+                <FontAwesome6 name="chart-line" iconStyle="solid" size={20} color={COLORS.info} />
+              </View>
+              <TextComponent value={STRINGS.statistics.noDataTitle} size="Small" variant="bold" />
+              <TextComponent value={STRINGS.statistics.noDataSubtitle} size="ExtraSmall" color={COLORS.textSecondary} style={styles.emptyChartCopy} />
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -295,6 +311,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  chartTotal: { gap: 3, marginTop: -4 },
+  emptyChart: { minHeight: heightPercentageToDP(26), alignItems: 'center', justifyContent: 'center', gap: SPACING.xs, paddingHorizontal: SPACING.xl },
+  emptyChartIcon: { width: 48, height: 48, borderRadius: RADIUS.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.brandLight },
+  emptyChartCopy: { textAlign: 'center' },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
