@@ -5,8 +5,11 @@ import { TextComponent } from '../Components/TextComponent';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { RootStackParamList } from '../../types/navigation';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { useAuth } from '../../context/authContext';
 import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
+import { heightPercentageToDP } from '../../utils/responsive';
+import { useQuery } from '@realm/react';
+import { User } from '../../db/schema/User';
 
 const data = [
   {
@@ -37,8 +40,9 @@ const data = [
 ] as const;
 
 const ProfileScreen = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const { user } = useAuth();
+  const UserDetails = useQuery(User)[0];
   const onNavPress = (value: (typeof data)[number]['nav']) => {
     switch (value) {
       case 'Security': {
@@ -62,33 +66,36 @@ const ProfileScreen = () => {
     }
   };
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.surfaceMuted }]}>
       <ScreenHeader value={STRINGS.profile.title} showBackButton={false} />
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.hero}>
-          <View style={styles.avatarWrap}>
+        <View style={[styles.hero,{backgroundColor: colors.surfaceMuted}]}>
+          <View style={[styles.avatarWrap,{ backgroundColor: colors.surfaceMuted }]}>
             <Image source={ImageAssets.manCoinDonut} style={styles.avatar} />
           </View>
           <TextComponent
             varient="bold"
             size="MMedium"
-            value={user?.name ?? ''}
+            value={UserDetails?.name ?? ''}
             color={COLORS.textPrimary}
           />
           <TextComponent
-            value={STRINGS.profile.handle}
+            value={UserDetails?.tag}
             color={COLORS.info}
             size="Small"
           />
         </View>
 
-        <View style={styles.card}>
+      
+
+        <View style={[styles.card,{ backgroundColor: colors.surface }]}>
           {data.map(item => (
             <TouchableOpacity
               key={item.nav}
               style={styles.row}
               onPress={() => onNavPress(item.nav)}
             >
+             <View style={{flexDirection:"row",alignItems: "center",gap: heightPercentageToDP(2)}}>
               <View style={styles.rowIcon}>
                 <FontAwesome6
                   iconStyle="solid"
@@ -98,6 +105,7 @@ const ProfileScreen = () => {
                 />
               </View>
               <TextComponent value={item.name} color={COLORS.textPrimary} />
+              </View> 
               <FontAwesome6
                 iconStyle="solid"
                 name="chevron-right"
@@ -115,15 +123,14 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.surfaceMuted,
   },
   container: {
     padding: SPACING.lg,
     gap: SPACING.lg,
     paddingBottom: SPACING.xl,
+    height: heightPercentageToDP(50)
   },
   hero: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.xl,
     alignItems: 'center',
@@ -138,14 +145,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.surfaceMuted,
   },
   avatar: {
     width: 76,
     height: 76,
   },
   card: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     ...SHADOWS.card,
@@ -154,6 +159,7 @@ const styles = StyleSheet.create({
     minHeight: 66,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: "space-between",
     paddingHorizontal: SPACING.lg,
     gap: SPACING.md,
     borderBottomWidth: StyleSheet.hairlineWidth,

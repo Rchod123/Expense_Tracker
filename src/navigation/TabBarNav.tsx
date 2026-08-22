@@ -10,6 +10,7 @@ import ProfileScreen from '../ui/Screens/ProfileScreen';
 import type { TabParamList } from '../types/navigation';
 import { StatisticsScreen } from '../ui/Screens/StatisticsScreen';
 import { COLORS } from '../ui/Constants';
+import { useTheme } from '../context/themeContext';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -34,23 +35,28 @@ type TabIconProps = {
   focused: boolean;
 };
 
-const TabIcon: React.FC<TabIconProps> = ({ name, focused }) => (
-  <FontAwesome6
-    name={name}
-    iconStyle="solid"
-    color={focused ? COLORS.info : COLORS.textPrimary}
-    size={focused ? heightPercentageToDP(3) : heightPercentageToDP(2)}
-  />
-);
+const TabIcon: React.FC<TabIconProps> = ({ name, focused }) => {
+  const { colors } = useTheme();
+  return (
+    <FontAwesome6
+      name={name}
+      iconStyle="solid"
+      color={focused ? colors.info : colors.textPrimary}
+      size={focused ? heightPercentageToDP(3) : heightPercentageToDP(2)}
+    />
+  );
+};
 
-const Tabs = () => (
-  <Tab.Navigator
-    screenOptions={{
-      tabBarStyle: { ...styles.tabContainer },
-      tabBarShowLabel: false,
-      headerShown: false,
-    }}
-  >
+const Tabs = () => {
+  const { colors } = useTheme();
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        tabBarStyle: { ...styles.tabContainer, backgroundColor: colors.surface },
+        tabBarShowLabel: false,
+        headerShown: false,
+      }}
+    >
     <Tab.Screen
       name="Dashboard"
       options={{
@@ -99,7 +105,8 @@ const Tabs = () => (
       name="Profile"
       component={ProfileScreen}
     />
-  </Tab.Navigator>
-);
+    </Tab.Navigator>
+  );
+};
 
 export default Tabs;

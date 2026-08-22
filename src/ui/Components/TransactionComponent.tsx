@@ -43,7 +43,8 @@ const TransactionComp: React.FC<TransactionProps> = ({
   scrollEnabled = true,
   emptyMessage = STRINGS.transaction.emptyTitle,
   onPress,
-}) => (
+}) => {
+  return(
   <FlatList
     data={transactions}
     scrollEnabled={scrollEnabled}
@@ -116,7 +117,7 @@ const TransactionComp: React.FC<TransactionProps> = ({
       );
     }}
   />
-);
+)};
 
 const styles = StyleSheet.create({
   row: {

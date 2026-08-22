@@ -1,8 +1,9 @@
 import { FlatList, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ImageAssets } from '../../assets';
-import { COLORS, RADIUS, STRINGS } from '../Constants';
+import { RADIUS, STRINGS } from '../Constants';
 import { heightPercentageToDP, widthPercentageToDP } from '../../utils/responsive';
 import { TextComponent } from './TextComponent';
+import { useTheme } from '../../context/themeContext';
 
 type UpcomingBill = {
   name: string;
@@ -40,7 +41,6 @@ const styles = StyleSheet.create({
   payButton: {
     height: heightPercentageToDP(4),
     width: widthPercentageToDP(16),
-    backgroundColor: COLORS.chip,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: RADIUS.pill,
@@ -48,10 +48,12 @@ const styles = StyleSheet.create({
 });
 
 const UpcomingBillsComp = () => {
+  const { colors } = useTheme();
   return (
     <FlatList
       data={data}
       keyExtractor={item => `${item.name}-${item.time}`}
+      scrollEnabled={false}
       renderItem={({ item }) => (
         <View style={styles.row}>
           <View style={styles.left}>
@@ -62,10 +64,10 @@ const UpcomingBillsComp = () => {
             />
             <View style={styles.copy}>
               <TextComponent value={item.name} />
-              <TextComponent value={item.time} color={COLORS.textSecondary} />
+              <TextComponent value={item.time} color={colors.textSecondary} />
             </View>
           </View>
-          <TouchableOpacity style={styles.payButton}>
+          <TouchableOpacity style={[styles.payButton,{backgroundColor: colors.chip,}]}>
             <TextComponent value={STRINGS.common.pay} />
           </TouchableOpacity>
         </View>

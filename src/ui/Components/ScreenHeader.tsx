@@ -7,17 +7,16 @@ import { useNavigation } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { TextComponent } from './TextComponent';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
 
 const styles = StyleSheet.create({
   radius: {
     height: heightPercentageToDP(7.5),
-    backgroundColor: COLORS.surface,
     borderTopLeftRadius: heightPercentageToDP(3),
     borderTopRightRadius: heightPercentageToDP(3),
   },
   container: {
-    backgroundColor: COLORS.brandStrong,
+
     paddingTop: heightPercentageToDP(1.5),
     height: heightPercentageToDP(22),
     justifyContent: 'space-between',
@@ -97,8 +96,9 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   showBackButton = true,
 }) => {
   const navigation = useNavigation();
+  const { colors } = useTheme();
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.brandStrong }]}>
       <View style={styles.glowLeft} />
       <View style={styles.glowRight} />
       <View style={styles.row}>
@@ -119,7 +119,7 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({
         <View style={styles.titleWrap}>
           <TextComponent
             value={value}
-            color={COLORS.surface}
+            color={colors.surface}
             size="MMedium"
             variant="bold"
           />
@@ -136,7 +136,7 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({
           <View style={styles.iconPlaceholder} />
         )}
       </View>
-      {required && <View style={styles.radius} />}
+      {required && <View style={[styles.radius,{backgroundColor: colors.surface}]} />}
     </SafeAreaView>
   );
 };

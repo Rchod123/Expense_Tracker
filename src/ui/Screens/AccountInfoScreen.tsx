@@ -1,35 +1,110 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from 'react-native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import ScreenHeader from '../Components/ScreenHeader';
 import { TextComponent } from '../Components/TextComponent';
 import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
+import { useQuery, useRealm } from '@realm/react';
+import { useAuth } from '../../context/authContext';
+import { User } from '../../db/schema/User';
+import Realm, { BSON } from 'realm';
+import { userApi } from '../../services/apiClient';
 
 const AccountInfoScreen = () => {
+  const { colors } = useTheme();
+  const { user, updateUser } = useAuth();
+  const realm = useRealm();
+  const users = useQuery(User);
+  const [isSaving, setIsSaving] = useState(false);
   const [accountInfo, setAccountInfo] = useState({
     name: '',
     email: '',
-    phoneNumber: '',
+    mobile: '',
+    tag: '',
   });
 
-  const handleSave = () => {
-    console.log('Account Info:', accountInfo);
+  useEffect(() => {
+    const savedUser = Array.from(users).find(
+      item => item._id.toString() === user?.id,
+    );
+    setAccountInfo({
+      name: savedUser?.name ?? user?.name ?? '',
+      email: savedUser?.email ?? user?.email ?? '',
+      mobile: savedUser?.mobile ?? user?.mobile ?? '',
+      tag: savedUser?.tag ?? user?.tag ?? '',
+    });
+  }, [user, users]);
+
+  const handleSave = async () => {
+    if (!user?.id || !BSON.ObjectId.isValid(user.id)) {
+      Alert.alert(STRINGS.profile.saveError);
+      return;
+    }
+
+    const payload = {
+      id: user.id,
+      name: accountInfo.name.trim(),
+      email: accountInfo.email.trim().toLowerCase(),
+      mobile: accountInfo.mobile.trim(),
+      tag: accountInfo.tag.trim(),
+    };
+
+    setIsSaving(true);
+    try {
+      realm.write(() => {
+        realm.create(
+          User,
+          {
+            _id: new BSON.ObjectId(payload.id),
+            ...payload,
+            synced: false,
+          },
+          Realm.UpdateMode.Modified,
+        );
+      });
+      const savedUser = await userApi.update(payload);
+      realm.write(() => {
+        realm.create(
+          User,
+          {
+            _id: new BSON.ObjectId(savedUser.id),
+            name: savedUser.name,
+            email: savedUser.email,
+            mobile: savedUser.mobile,
+            tag: savedUser.tag,
+            synced: true,
+          },
+          Realm.UpdateMode.Modified,
+        );
+      });
+      await updateUser(savedUser);
+      Alert.alert(STRINGS.profile.saveSuccess);
+    } catch (error) {
+      Alert.alert(
+        STRINGS.profile.saveError,
+        error instanceof Error ? error.message : STRINGS.profile.saveError,
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <>
       <ScreenHeader value={STRINGS.profile.accountInfo} required={false} />
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container,{ backgroundColor: colors.surfaceMuted,}]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.hero}>
+        <View style={[styles.hero,{ backgroundColor: colors.surface,}]}>
           <FontAwesome6
             name="address-card"
             iconStyle="solid"
@@ -49,7 +124,7 @@ const AccountInfoScreen = () => {
           />
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card,{backgroundColor: colors.surface}]}>
           <Field
             label={STRINGS.profile.namePlaceholder}
             value={accountInfo.name}
@@ -68,15 +143,27 @@ const AccountInfoScreen = () => {
           />
           <Field
             label={STRINGS.profile.phonePlaceholder}
-            value={accountInfo.phoneNumber}
+            value={accountInfo.mobile}
             keyboardType="phone-pad"
             onChangeText={text =>
-              setAccountInfo(prev => ({ ...prev, phoneNumber: text }))
+              setAccountInfo(prev => ({ ...prev, mobile: text }))
+            }
+          />
+          <Field
+            label={STRINGS.profile.tagPlaceholder}
+            value={accountInfo.tag}
+            autoCapitalize="none"
+            onChangeText={text =>
+              setAccountInfo(prev => ({ ...prev, tag: text }))
             }
           />
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
+        <TouchableOpacity
+          style={[styles.button, isSaving && styles.buttonDisabled]}
+          onPress={handleSave}
+          disabled={isSaving}
+        >
           <TextComponent
             value={STRINGS.profile.saveAccount}
             color={COLORS.surface}
@@ -125,12 +212,11 @@ const Field: React.FC<FieldProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: COLORS.surfaceMuted,
+   
     padding: SPACING.lg,
     gap: SPACING.lg,
   },
   hero: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.xl,
     alignItems: 'center',
@@ -138,7 +224,6 @@ const styles = StyleSheet.create({
     ...SHADOWS.card,
   },
   card: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     gap: SPACING.lg,
@@ -163,6 +248,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...SHADOWS.card,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });
 

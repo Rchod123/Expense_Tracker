@@ -5,6 +5,8 @@ import {
   View,
   type TextProps as RNTextProps,
 } from 'react-native';
+import { useTheme } from '../../context/themeContext';
+import { COLORS } from '../Constants';
 
 type Variant = 'medium' | 'bold' | 'thin' | 'default';
 type Size =
@@ -49,12 +51,25 @@ export const TextComponent: React.FC<Props> = ({
   value,
   variant,
   varient,
-  color = '#000',
   size = 'Medium',
   showMore = false,
+  color,
   style,
   ...props
 }) => {
+  const { colors } = useTheme();
+  const colorMap: Partial<Record<string, string>> = {
+    [COLORS.brand]: colors.brand,
+    [COLORS.brandStrong]: colors.brandStrong,
+    [COLORS.surface]: colors.surface,
+    [COLORS.surfaceMuted]: colors.surfaceMuted,
+    [COLORS.textPrimary]: colors.textPrimary,
+    [COLORS.textSecondary]: colors.textSecondary,
+    [COLORS.textMuted]: colors.textMuted,
+    [COLORS.border]: colors.border,
+    [COLORS.info]: colors.info,
+  };
+  const resolvedColor = colorMap[color ?? ''] ?? color ?? colors.textPrimary;
   const resolvedVariant = variant ?? varient ?? 'default';
   const [showButton, setShowButton] = useState(false);
 
@@ -65,7 +80,7 @@ export const TextComponent: React.FC<Props> = ({
         numberOfLines={showButton ? undefined: 1}
         style={[
           {
-            color,
+            color: resolvedColor,
             fontSize: fontSizeMap[size],
             fontWeight: fontWeightMap[resolvedVariant],
           },
@@ -76,7 +91,7 @@ export const TextComponent: React.FC<Props> = ({
       </Text>
       {showMore && value?.length > 30 && (
         <TouchableOpacity   onPress={() => setShowButton((prev) => !prev)}>
-          <Text style={{alignSelf: "flex-end",color: color}}>{showButton ? 'Show Less': 'Show More'}</Text>
+          <Text style={{ alignSelf: 'flex-end', color: resolvedColor }}>{showButton ? 'Show Less': 'Show More'}</Text>
         </TouchableOpacity>
       )}
     </View>

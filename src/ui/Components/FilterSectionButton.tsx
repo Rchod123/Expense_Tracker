@@ -1,6 +1,7 @@
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { TextComponent } from './TextComponent';
 import { COLORS, RADIUS, SPACING, SHADOWS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
 
 
 type Props = {
@@ -21,7 +22,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
     borderWidth: 1,
     borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...SHADOWS.card,
@@ -34,14 +34,15 @@ export const FilterSectionButton: React.FC<Props> = ({
   selectedValue,
 }) => {
   const isSelected = selectedValue === value;
+  const {colors} = useTheme();
   return (
     <TouchableOpacity
-      style={[styles.container, isSelected && styles.selected]}
+      style={[styles.container,{backgroundColor: colors.surface}, isSelected && styles.selected]}
       onPress={() => onPress(value)}
     >
       <TextComponent
         value={value}
-        color={isSelected ? COLORS.surface : COLORS.textPrimary}
+        color={isSelected ? colors.surface : colors.textPrimary}
         variant="medium"
         size="ExtraSmall"
       />

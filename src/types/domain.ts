@@ -23,6 +23,15 @@ export type Account = {
   createdAt: string;
 };
 
+export type UserType = {
+  id: string;
+  name: string;
+  email: string;
+  mobile: string;
+  tag: string;
+  createdAt?: string;
+}
+
 export type Transaction = {
   ui: "manCoinDonut" | "youtube" | "creditCard" | "payPal" | "netflix" | "amazon" | "outflow" | "transfer" | "inflow" | "moneyFlow" | "salary" | "interest" | "electricity" | "spotify" | "house";
   id: number;

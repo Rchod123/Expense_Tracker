@@ -11,6 +11,7 @@ import { RealmProvider } from "@realm/react";
 import { Task } from "./src/db/schema/Task";
 import { Expense } from "./src/db/schema/Expense";
 import { Category } from "./src/db/schema/Categories";
+import { User } from "./src/db/schema/User";
 import { useExpenseSync } from "./src/utils/apiHooks";
 import { AuthProvider } from "./src/context/authContext";
 import { LoginScreen } from "./src/ui/Screens/LoginScreen";
@@ -23,6 +24,7 @@ import PersonalProfileScreen from "./src/ui/Screens/ProfileInfoScreen";
 import MessageCenterScreen from "./src/ui/Screens/MessageCenterScreen";
 import DataPrivacyScreen from "./src/ui/Screens/DataPrivacyScreen";
 import TransactionsScreen from './src/ui/Screens/TransactionsScreen';
+import { ThemeProvider } from './src/context/themeContext';
 
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,7 +37,7 @@ const SyncBootstrap = () => {
 const App = () => {
 
   return (
-    <RealmProvider deleteRealmIfMigrationNeeded schema={[Task,Expense,Category]}>
+    <RealmProvider deleteRealmIfMigrationNeeded schema={[Task, Expense, Category, User]}>
     <SyncBootstrap />
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="Splash" component={SplashScreen}/>
@@ -62,9 +64,11 @@ export default function Main(){
   return(
     <SafeAreaProvider>
       <AuthProvider>
-      <NavigationContainer>
-        <App />
-      </NavigationContainer>
+      <ThemeProvider>
+        <NavigationContainer>
+          <App />
+        </NavigationContainer>
+      </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>
   )

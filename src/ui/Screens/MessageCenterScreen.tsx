@@ -4,16 +4,21 @@ import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import ScreenHeader from '../Components/ScreenHeader';
 import { TextComponent } from '../Components/TextComponent';
 import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
 
 const MessageCenterScreen = () => {
+  const { colors } = useTheme();
   return (
     <>
       <ScreenHeader value={STRINGS.profile.messageCenter} required={false} />
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[
+          styles.container,
+          { backgroundColor: colors.surfaceMuted },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.hero}>
+        <View style={[styles.hero, { backgroundColor: colors.surface }]}>
           <View style={styles.iconWrap}>
             <FontAwesome6
               name="inbox"
@@ -35,7 +40,7 @@ const MessageCenterScreen = () => {
           />
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
           <TextComponent
             value={STRINGS.profile.messageUpdates}
             size="Small"
@@ -58,7 +63,9 @@ const MessageCenterScreen = () => {
           </View>
         </View>
 
-        <View style={styles.tipCard}>
+        <View
+          style={[styles.tipCard, { backgroundColor: colors.brandLighter }]}
+        >
           <FontAwesome6
             name="bell"
             iconStyle="solid"
@@ -79,12 +86,10 @@ const MessageCenterScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: COLORS.surfaceMuted,
     padding: SPACING.lg,
     gap: SPACING.lg,
   },
   hero: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.xl,
     gap: SPACING.sm,
@@ -100,7 +105,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   card: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     gap: SPACING.md,
@@ -123,7 +127,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   tipCard: {
-    backgroundColor: COLORS.brandLighter,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     flexDirection: 'row',

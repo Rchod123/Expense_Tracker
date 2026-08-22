@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   register: (name: string, email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (updates: Record<string, unknown>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -80,8 +81,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await clearAuthData();
   };
 
+  const updateUser = async (updates: Record<string, unknown>) => {
+    if (!user || !token) return;
+    const nextUser = { ...user, ...updates };
+    setUser(nextUser);
+    await saveAuthData(token, nextUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout, register, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

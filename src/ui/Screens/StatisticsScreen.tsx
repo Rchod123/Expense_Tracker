@@ -15,11 +15,13 @@ import {
 } from '../../utils/commonHooks';
 import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
 import { formatCurrency } from '../../utils/currency';
+import { useTheme } from '../../context/themeContext';
 
 const chartFilters = [STRINGS.statistics.weekly, STRINGS.statistics.monthly];
 const graphFilters = [STRINGS.statistics.outflow, STRINGS.statistics.inflow];
 
 export const StatisticsScreen = () => {
+  const { colors } = useTheme();
   const [selectedRange, setSelectedRange] = useState<string>(
     STRINGS.statistics.weekly,
   );
@@ -47,7 +49,7 @@ export const StatisticsScreen = () => {
   const hasChartData = chartData.some(item => item.value > 0);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.surfaceMuted }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.container}
@@ -59,7 +61,6 @@ export const StatisticsScreen = () => {
                 value={STRINGS.statistics.title}
                 size="GMedium"
                 variant="bold"
-                color={COLORS.surface}
               />
               <TextComponent
                 value={STRINGS.statistics.subtitle}
@@ -91,7 +92,7 @@ export const StatisticsScreen = () => {
           </View>
         </View>
 
-        <View style={styles.filterCard}>
+        <View style={[styles.filterCard, { backgroundColor: colors.surface }]}>
           <View style={styles.filterHeader}>
             <TextComponent
               value={STRINGS.statistics.summaryTitle}
@@ -127,7 +128,7 @@ export const StatisticsScreen = () => {
           </View>
         </View>
 
-        <View style={styles.chartCard}>
+        <View style={[styles.chartCard, { backgroundColor: colors.surface }]}>
           <View style={styles.chartHeader}>
             <View>
               <TextComponent

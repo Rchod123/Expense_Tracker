@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { TextComponent } from './TextComponent';
 import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
 
 type AuthScreenFrameProps = {
   title: string;
@@ -25,13 +26,14 @@ const AuthScreenFrame: React.FC<AuthScreenFrameProps> = ({
   onFooterPress,
   children,
 }) => {
+  const { colors } = useTheme();
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.surfaceMuted }]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.hero}>
+      <View style={[styles.hero, { backgroundColor: colors.surface }]}>
         <View style={styles.brandPill}>
           <TextComponent
             value={STRINGS.app.brand}
@@ -49,7 +51,7 @@ const AuthScreenFrame: React.FC<AuthScreenFrameProps> = ({
         <TextComponent value={subtitle} size="Small" color={COLORS.textSecondary} />
       </View>
 
-      <View style={styles.card}>{children}</View>
+      <View style={[styles.card, { backgroundColor: colors.surface }]}>{children}</View>
 
       <View style={styles.footer}>
         <TextComponent value={footerText} size="Small" color={COLORS.textSecondary} />

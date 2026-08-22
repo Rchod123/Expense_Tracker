@@ -2,6 +2,7 @@ import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { TextComponent } from './TextComponent';
 import { COLORS, RADIUS, SHADOWS } from '../Constants';
 import { widthPercentageToDP } from '../../utils/responsive';
+import { useTheme } from '../../context/themeContext';
 
 type ButtonProps = {
   value: string;
@@ -52,6 +53,13 @@ const ButtonComponent: React.FC<ButtonProps> = ({
   type,
   disabled = false,
 }) => {
+  const { colors } = useTheme();
+  const selectedColors = {
+    ...colorSet[type],
+    background: type === 'primary' ? colors.info : colors.surface,
+    textColor: type === 'primary' ? colors.surface : colors.info,
+    lineColor: colors.info,
+  };
   return (
     <TouchableOpacity
       disabled={disabled}
@@ -59,9 +67,9 @@ const ButtonComponent: React.FC<ButtonProps> = ({
       style={[
         styles.mainContainer,
         {
-          backgroundColor: colorSet[type].background,
-          borderWidth: colorSet[type].width,
-          borderColor: colorSet[type].lineColor,
+          backgroundColor: selectedColors.background,
+          borderWidth: selectedColors.width,
+          borderColor: selectedColors.lineColor,
         },
         SHADOWS.card,
         disabled && { opacity: 0.6 },
@@ -72,7 +80,7 @@ const ButtonComponent: React.FC<ButtonProps> = ({
         style={styles.content}
         value={value}
         variant="bold"
-        color={colorSet[type].textColor}
+        color={selectedColors.textColor}
       />
     </TouchableOpacity>
   );

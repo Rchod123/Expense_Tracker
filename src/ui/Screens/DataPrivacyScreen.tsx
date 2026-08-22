@@ -4,6 +4,7 @@ import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import ScreenHeader from '../Components/ScreenHeader';
 import { TextComponent } from '../Components/TextComponent';
 import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
 
 const policyRows = [
   {
@@ -24,34 +25,35 @@ const policyRows = [
 ] as const;
 
 const DataPrivacyScreen = () => {
+  const { colors } = useTheme();
   return (
     <>
       <ScreenHeader value={STRINGS.profile.dataAndPrivacy} required={true} />
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container,{ backgroundColor: colors.surfaceMuted }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.hero}>
+        <View style={[styles.hero,{backgroundColor: colors.surface}]}>
           <FontAwesome6
             name="shield"
             iconStyle="solid"
             size={26}
-            color={COLORS.brandStrong}
+            color={colors.brandStrong}
           />
           <TextComponent
             value={STRINGS.profile.privacyTitle}
             size="MMedium"
             variant="bold"
-            color={COLORS.textPrimary}
+            color={colors.textPrimary}
           />
           <TextComponent
             value={STRINGS.profile.privacySubtitle}
             size="Small"
-            color={COLORS.textSecondary}
+            color={colors.textSecondary}
           />
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card,{ backgroundColor: colors.surface,}]}>
           {policyRows.map((row, index) => (
             <View
               key={row.title}
@@ -85,7 +87,7 @@ const DataPrivacyScreen = () => {
           ))}
         </View>
 
-        <View style={styles.noteCard}>
+        <View style={[styles.noteCard,{backgroundColor: colors.brandLighter,}]}>
           <TextComponent
             value={STRINGS.profile.privacyControlTitle}
             size="Small"
@@ -106,12 +108,10 @@ const DataPrivacyScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: COLORS.surfaceMuted,
     padding: SPACING.lg,
     gap: SPACING.lg,
   },
   hero: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.xl,
     alignItems: 'center',
@@ -119,7 +119,6 @@ const styles = StyleSheet.create({
     ...SHADOWS.card,
   },
   card: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     ...SHADOWS.card,
@@ -147,7 +146,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   noteCard: {
-    backgroundColor: COLORS.brandLighter,
+    
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     gap: 4,

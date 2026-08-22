@@ -15,6 +15,7 @@ import {
   heightPercentageToDP,
 } from '../../utils/responsive';
 import { COLORS, RADIUS, STRINGS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
 
 type BalanceCardProps = {
   balance: number;
@@ -37,6 +38,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
   onPress,
 }) => {
   const [visible, setVisible] = useState(false);
+  const { colors } = useTheme();
   return (
     <View style={styles.card}>
       <View style={styles.glowOne} />
@@ -93,7 +95,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
           style={styles.modalBackdrop}
           onPress={() => setVisible(false)}
         >
-          <Pressable style={styles.modalCard} onPress={() => undefined}>
+          <Pressable style={[styles.modalCard,{backgroundColor: colors.surface,}]} onPress={() => undefined}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <TextComponent
@@ -109,7 +111,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
               keyExtractor={item => `${item.id}`}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={styles.modalRow}
+                  style={[styles.modalRow,{ backgroundColor: colors.surfaceMuted }]}
                   onPress={() => {
                     onPress(item.id);
                     setVisible(false);
@@ -225,7 +227,7 @@ const styles = StyleSheet.create({
   modalCard: {
     minHeight: heightPercentageToDP(24),
     width: '100%',
-    backgroundColor: COLORS.surface,
+    
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     paddingHorizontal: 18,
@@ -259,7 +261,7 @@ const styles = StyleSheet.create({
     gap: 12,
     borderRadius: RADIUS.lg,
     paddingHorizontal: 12,
-    backgroundColor: COLORS.surfaceMuted,
+
   },
   modalRowIcon: {
     width: 28,

@@ -6,6 +6,7 @@ import type { RootStackParamList } from '../../types/navigation';
 import { useAuth } from '../../context/authContext';
 import { COLORS, STRINGS } from '../Constants';
 import { ImageAssets } from '../../assets';
+import { useTheme } from '../../context/themeContext';
 
 const styles = StyleSheet.create({
   mainContainer: {
@@ -34,6 +35,7 @@ const styles = StyleSheet.create({
 });
 
 const SplashScreen = () => {
+  const { colors } = useTheme();
   const stackNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { token, isLoading } = useAuth();
 useEffect(() => {
@@ -60,7 +62,7 @@ useEffect(() => {
   }
 
   return (
-    <View style={styles.mainContainer}>
+    <View style={[styles.mainContainer, { backgroundColor: colors.brand }]}>
       <Image source={ImageAssets.manCoinDonut} style={styles.logo} resizeMode="contain" />
       <Text style={styles.nameStyle}>{STRINGS.app.name}</Text>
     </View>

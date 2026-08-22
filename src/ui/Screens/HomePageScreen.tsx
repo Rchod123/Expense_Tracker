@@ -28,6 +28,8 @@ import { useExpenseSync } from '../../utils/apiHooks';
 import { useAuth } from '../../context/authContext';
 import { getGreeting } from '../../utils/commonFunctions';
 import { COLORS, STRINGS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
+import { User } from '../../db/schema/User';
 
 const quickActions = [
   { label: STRINGS.home.addMoney, icon: 'plus', color: '#E2F5F1' },
@@ -37,16 +39,18 @@ const quickActions = [
 
 const HomePageScreen = () => {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const expense = useQuery(Expense)
     .filtered('userId == $0', user?.id ?? '')
     .sorted('date', true);
-
+  const UserDetails = useQuery(User);
   const isFocused = useIsFocused();
   const { totalIncome } = useRealmData();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { runSync } = useExpenseSync();
   const { income, expenses } = totalIncome();
+  console.log(UserDetails,"checking in home page");
   const [summary, setSummary] = useState<MonthlySummary>({
     income: 0,
     expenses: 0,
@@ -66,6 +70,10 @@ const HomePageScreen = () => {
     });
   }, [income, expenses]);
 
+  useEffect(() =>{
+    
+  },[user?.id])
+
   const balanceMenuFunction = (id: number) => {
     switch (id) {
       case 1: {
@@ -84,8 +92,8 @@ const HomePageScreen = () => {
   useExit();
   const { greeting, emoji } = getGreeting();
   return (
-    <View style={styles.screen}>
-      <View style={[styles.hero, { paddingTop: Math.max(insets.top, 18) }]}>
+    <View style={[styles.screen, { backgroundColor: colors.surfaceMuted }]}>
+      <View style={[styles.hero, { paddingTop: Math.max(insets.top, 18), backgroundColor: colors.brandStrong }]}>
         <View style={styles.heroContent}>
           <View style={styles.headerRow}>
             <View>
@@ -158,7 +166,7 @@ const HomePageScreen = () => {
                   type: action.label === STRINGS.home.addMoney ? 'income' : 'expense',
                 })
               }
-              style={styles.actionButton}
+              style={[styles.actionButton,{backgroundColor: colors.surface}]}
             >
               <View
                 style={[styles.actionIcon, { backgroundColor: action.color }]}
@@ -179,7 +187,7 @@ const HomePageScreen = () => {
           ))}
         </View>
 
-        <View style={styles.insightCard}>
+        <View style={[styles.insightCard,{backgroundColor: colors.brandLight}]}>
           <View style={styles.insightIcon}>
             <FontAwesome6
               name="chart-line"
@@ -243,7 +251,7 @@ const HomePageScreen = () => {
           </Pressable>
         </View>
 
-        <View style={styles.transactionsCard}>
+        <View style={[styles.transactionsCard,{backgroundColor: colors.surface}]}>
           <TransactionComp
             transactions={expense.slice(0, 4).map(item => ({
               ui: item.ui as keyof typeof import('../../assets').ImageAssets,
@@ -320,7 +328,6 @@ const styles = StyleSheet.create({
     minHeight: 104,
     paddingVertical: 14,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 9,
@@ -347,7 +354,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 18,
     gap: 12,
-    backgroundColor: '#EAF6F3',
   },
   insightIcon: {
     width: 36,
@@ -364,7 +370,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   transactionsCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     paddingHorizontal: 16,
     ...Platform.select({

@@ -18,6 +18,8 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../types/navigation';
 import { useBiometric } from '../../utils/hooks';
 import { COLORS, STRINGS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
+import { ThemeSelector } from '../Components/ThemeSelector';
 
 type SecurityItem = {
   id: string;
@@ -34,6 +36,7 @@ const SecurityScreen = () => {
   const [autoLock, setAutoLock] = useState('30');
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { checkBiometricAvailability } = useBiometric();
+  const { colors } = useTheme();
   useEffect(() => {
     const getData = async () => {
     const device = await getDeviceData();
@@ -158,7 +161,7 @@ const SecurityScreen = () => {
                 autoLock === option.value && styles.radioSelected,
               ]}
             />
-            <Text style={styles.radioText}>{option.label}</Text>
+            <Text style={[styles.radioText,{color: colors.textPrimary}]}>{option.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -188,8 +191,8 @@ const SecurityScreen = () => {
   const renderItem = ({ item }: { item: SecurityItem }) => {
     if (item.type === 'radio') {
       return (
-        <View style={styles.card}>
-          <Text style={styles.title}>{item.title}</Text>
+        <View style={[styles.card,{backgroundColor: colors.surface,}]}>
+          <Text style={[styles.title,{color: colors.textPrimary}]}>{item.title}</Text>
           {renderRadioOptions()}
         </View>
       );
@@ -197,7 +200,7 @@ const SecurityScreen = () => {
 
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[styles.card,{backgroundColor: colors.surface}]}
         activeOpacity={0.8}
         onPress={() => {
           if (item.type === 'navigation') {
@@ -205,12 +208,12 @@ const SecurityScreen = () => {
           }
         }}
       >
-        <Text style={styles.title}>{item.title}</Text>
+        <Text style={[styles.title,{color: colors.textPrimary}]}>{item.title}</Text>
 
         {item.type === 'switch' ? (
           renderSwitch(item.id)
         ) : (
-          <Text style={styles.arrow}>›</Text>
+          <Text style={[styles.arrow,{color: colors.textPrimary}]}>›</Text>
         )}
       </TouchableOpacity>
     );
@@ -219,7 +222,7 @@ const SecurityScreen = () => {
   return (
     <>
       <ScreenHeader value={STRINGS.security.title} required={true} />
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.surfaceMuted }]}>
         <FlatList
           data={securityItems}
           keyExtractor={item => item.id}
@@ -230,6 +233,7 @@ const SecurityScreen = () => {
             padding: 16,
             paddingBottom: 30,
           }}
+          ListHeaderComponent={<ThemeSelector />}
           ListFooterComponentStyle={{
             paddingTop: heightPercentageToDP(6),
             alignSelf: 'center',
@@ -256,7 +260,6 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 18,
     flexDirection: 'row',

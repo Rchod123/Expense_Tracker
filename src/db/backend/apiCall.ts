@@ -1,7 +1,8 @@
 import Realm, { BSON } from 'realm';
 import { Expense } from '../schema/Expense';
 import { Category } from '../schema/Categories';
-import { categoriesApi, expensesApi } from '../../services/apiClient';
+import { categoriesApi, expensesApi, userApi } from '../../services/apiClient';
+import { User } from '../schema/User';
 
 interface SyncResult {
   success: boolean;
@@ -100,7 +101,9 @@ export const syncUnsyncedCategories = async (
   }));
 
   try {
-    const { syncedIds = items.map(i => i._id) } = await categoriesApi.sync(items);
+    const { syncedIds = items.map(i => i._id) } = await categoriesApi.sync(
+      items,
+    );
     const syncedIdSet = new Set(syncedIds);
 
     realm.write(() => {
@@ -223,6 +226,35 @@ export const pullCategoriesFromMongo = async (
   }
 };
 
+export const pullUserDetailsFromMongo = async (
+  realm: Realm,
+): Promise<SyncResult> => {
+  try {
+    const userDetails = await userApi.get();
+    realm.write(() => {
+      realm.create(
+        User,
+        {
+          _id: new BSON.ObjectId(userDetails.id),
+          name: userDetails.name,
+          email: userDetails.email,
+          mobile: userDetails.mobile,
+          tag: userDetails.tag,
+        },
+        Realm.UpdateMode.Modified,
+      );
+    });
+    return { success: true, syncedCount: 0, failedIds: [] };
+  } catch (err) {
+    return {
+      success: false,
+      syncedCount: 0,
+      failedIds: [],
+      error: err instanceof Error ? err.message : 'Unknown pull error',
+    };
+  }
+};
+
 // const pullUserDataFromMongo = async (): Promise<SyncResult> => {
 //   try {
 //     const response = await fetch(`${API_ENDPOINT}/user`);
@@ -231,8 +263,6 @@ export const pullCategoriesFromMongo = async (
 //     }
 
 //     const remoteUser: RemoteUser = await response.json();
-
-
 
 //   } catch (error) {
 //     console.error('Failed to pull categories from MongoDB:', error);
@@ -253,17 +283,20 @@ export const performFullSync = async (
   const pushCategories = await syncUnsyncedCategories(realm);
   const pullExpenses = await pullExpensesFromMongo(realm, userId);
   const pullCategories = await pullCategoriesFromMongo(realm);
+  const userPull = await pullUserDetailsFromMongo(realm);
 
   const success =
     pushExpenses.success &&
     pushCategories.success &&
     pullExpenses.success &&
+    userPull.success &&
     pullCategories.success;
 
   const error =
     pushExpenses.error ??
     pushCategories.error ??
     pullExpenses.error ??
+    userPull.error ??
     pullCategories.error;
 
   return { success, error };

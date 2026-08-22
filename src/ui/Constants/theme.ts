@@ -21,6 +21,32 @@ export const COLORS = {
   chip: '#ECF9F8',
 } as const;
 
+export type ThemeMode = 'light' | 'dark' | 'custom';
+export type ThemeColors = {
+  [Key in keyof typeof COLORS]: string;
+};
+
+export const LIGHT_COLORS: ThemeColors = COLORS;
+
+export const DARK_COLORS: ThemeColors = {
+  ...COLORS,
+  brand: '#4BB3A7',
+  brandStrong: '#2A8C81',
+  brandLight: '#173B3A',
+  brandLighter: '#102827',
+  surface: '#182524',
+  surfaceMuted: '#101918',
+  surfaceSoft: '#223331',
+  textPrimary: '#F2FAF8',
+  textSecondary: '#B4C8C4',
+  textMuted: '#8FA6A1',
+  border: '#35504C',
+  shadow: '#000000',
+  ink: '#FFFFFF',
+  overlay: 'rgba(0, 0, 0, 0.62)',
+  chip: '#1E4946',
+};
+
 export const SPACING = {
   xxs: 4,
   xs: 8,

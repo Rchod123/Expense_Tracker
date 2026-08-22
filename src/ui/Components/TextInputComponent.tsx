@@ -14,6 +14,7 @@ import {
 import { TextComponent } from './TextComponent';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { COLORS, RADIUS, SHADOWS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
 
 const styles = StyleSheet.create({
   labelContainer: {
@@ -64,14 +65,24 @@ export const BasicSkeleton: React.FC<{
   children: React.ReactNode;
   name: string;
   type?: 'dotted' | 'dashed';
-}> = ({ children, name, type = 'dotted' }) => (
-  <>
-    <View style={styles.labelContainer}>
-      <TextComponent value={name} variant="medium" />
-    </View>
-    <View style={[styles.inputContainer, { borderStyle: type }]}>{children}</View>
-  </>
-);
+}> = ({ children, name, type = 'dotted' }) => {
+  const { colors } = useTheme();
+  return (
+    <>
+      <View style={styles.labelContainer}>
+        <TextComponent value={name} variant="medium" />
+      </View>
+      <View
+        style={[
+          styles.inputContainer,
+          { backgroundColor: colors.surface, borderColor: colors.border, borderStyle: type },
+        ]}
+      >
+        {children}
+      </View>
+    </>
+  );
+};
 
 type InputProps = {
   name: string;
@@ -87,7 +98,7 @@ export const CustomInput: React.FC<InputProps & React.ComponentProps<typeof Text
   onRightPress,
   ...props
 }) => {
-  
+  const { colors } = useTheme();
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -98,8 +109,8 @@ export const CustomInput: React.FC<InputProps & React.ComponentProps<typeof Text
           <TextInput
             {...props}
             returnKeyType="done"
-            placeholderTextColor={COLORS.textMuted}
-            style={styles.textInput}
+            placeholderTextColor={colors.textMuted}
+            style={[styles.textInput, { color: colors.textPrimary }]}
           />
           {rightValue && (
             <TouchableOpacity onPress={onRightPress} style={styles.right}>
@@ -108,7 +119,7 @@ export const CustomInput: React.FC<InputProps & React.ComponentProps<typeof Text
                   name={rightValue as any}
                   iconStyle="solid"
                   size={heightPercentageToDP(2)}
-                  color={COLORS.textMuted}
+                  color={colors.textMuted}
                 />
               ) : (
                 <TextComponent value={rightValue} />

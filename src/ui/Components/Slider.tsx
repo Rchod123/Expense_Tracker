@@ -1,15 +1,14 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { TextComponent } from './TextComponent';
-import { COLORS } from '../Constants';
 import {
   heightPercentageToDP,
   widthPercentageToDP,
 } from '../../utils/responsive';
+import { useTheme } from '../../context/themeContext';
 
 const styles = StyleSheet.create({
   mainContainer: {
     flexDirection: 'row',
-    backgroundColor: COLORS.surfaceMuted,
     marginTop: heightPercentageToDP(2),
     height: heightPercentageToDP(4),
     paddingHorizontal: widthPercentageToDP(1),
@@ -39,17 +38,18 @@ export const Slider: React.FC<SliderProp> = ({
   toggle = false,
   setToggle,
 }) => {
+  const { colors } = useTheme();
   return (
-    <View style={styles.mainContainer}>
+    <View style={[styles.mainContainer,{backgroundColor: colors.surfaceMuted,}]}>
       <TouchableOpacity
         onPress={() => setToggle(false)}
-        style={[styles.slider, !toggle && { backgroundColor: COLORS.surface }]}
+        style={[styles.slider, !toggle && { backgroundColor: colors.surface }]}
       >
         <TextComponent value={name1} />
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => setToggle(true)}
-        style={[styles.slider, toggle && { backgroundColor: COLORS.surface }]}
+        style={[styles.slider, toggle && { backgroundColor: colors.surface }]}
       >
         <TextComponent value={name2} />
       </TouchableOpacity>

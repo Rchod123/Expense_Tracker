@@ -1,4 +1,5 @@
 import { API_ENDPOINT, AI_API_ENDPOINT } from '../config/api';
+import { UserType } from '../types/domain';
 import { getStoredToken } from './authStorage';
 
 type ApiError = { error?: string; message?: string };
@@ -16,7 +17,16 @@ const request = async <T>(
 
   const response = await fetch(url, { ...options, headers });
   const text = await response.text();
-  const data = text ? (JSON.parse(text) as T & ApiError) : ({} as T & ApiError);
+  let data = {} as T & ApiError;
+  if (text) {
+    try {
+      data = JSON.parse(text) as T & ApiError;
+    } catch {
+      throw new Error(
+        'Server returned an invalid response (' + response.status + ') from ' + url,
+      );
+    }
+  }
 
   if (!response.ok) {
     throw new Error(data.error ?? data.message ?? `Request failed (${response.status})`);
@@ -31,7 +41,7 @@ const authenticatedRequest = async <T>(
 
 export type AuthResponse = {
   token: string;
-  user: { id: string; name: string; email: string };
+  user: { id: string; name: string; email: string; mobile: string; tag: string };
 };
 
 export type ChatResponse = { reply?: string };
@@ -96,6 +106,15 @@ export const expensesApi = {
       body: JSON.stringify({ expenses }),
     }),
   list: () => authenticatedRequest<SyncPayload[]>('/expenses'),
+};
+
+export const userApi = {
+  update: (body: { id: string; name: string; email: string; mobile: string; tag: string }) =>
+    authenticatedRequest<UserType>('/user', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  get: () => authenticatedRequest<UserType>('/user'),
 };
 
 type CategoryPayload = {

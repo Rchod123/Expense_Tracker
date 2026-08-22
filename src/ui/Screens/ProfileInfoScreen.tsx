@@ -10,8 +10,10 @@ import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import ScreenHeader from '../Components/ScreenHeader';
 import { TextComponent } from '../Components/TextComponent';
 import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
+import { useTheme } from '../../context/themeContext';
 
 const PersonalProfileScreen = () => {
+  const { colors } = useTheme();
   const [profileInfo, setProfileInfo] = useState({
     name: '',
     bio: '',
@@ -25,10 +27,10 @@ const PersonalProfileScreen = () => {
     <>
       <ScreenHeader value={STRINGS.profile.personalProfile} required={false} />
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container,{backgroundColor: colors.surfaceMuted}]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.hero}>
+        <View style={[styles.hero,{backgroundColor: colors.surface,}]}>
           <FontAwesome6
             name="user-pen"
             iconStyle="solid"
@@ -48,7 +50,7 @@ const PersonalProfileScreen = () => {
           />
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card,{backgroundColor: colors.surface,}]}>
           <Field
             label={STRINGS.profile.namePlaceholder}
             value={profileInfo.name}
@@ -118,7 +120,6 @@ const styles = StyleSheet.create({
     gap: SPACING.lg,
   },
   hero: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.xl,
     alignItems: 'center',
@@ -126,7 +127,6 @@ const styles = StyleSheet.create({
     ...SHADOWS.card,
   },
   card: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     gap: SPACING.lg,

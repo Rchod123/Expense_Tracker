@@ -7,8 +7,10 @@ import { COLORS, RADIUS, SHADOWS, SPACING, STRINGS } from '../Constants';
 import ScreenHeader from '../Components/ScreenHeader';
 import TransactionComp, { type TransactionListItem } from '../Components/TransactionComponent';
 import TransactionDetailsModal from '../Components/TransactionDetailsModal';
+import { useTheme } from '../../context/themeContext';
 
 const TransactionsScreen = () => {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const [selected, setSelected] = useState<TransactionListItem | null>(null);
   const expenses = useQuery(Expense).filtered('userId == $0', user?.id ?? '').sorted('date', true);
@@ -25,7 +27,7 @@ const TransactionsScreen = () => {
   return (
     <View style={styles.screen}>
       <ScreenHeader value={STRINGS.transaction.title} required />
-      <View style={styles.listCard}>
+      <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
         <TransactionComp transactions={transactions} onPress={setSelected} />
       </View>
       <TransactionDetailsModal transaction={selected} onClose={() => setSelected(null)} />

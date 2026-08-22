@@ -257,7 +257,7 @@ const AddTransactionScreen = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [category, relam]);
 
   const handleDateChange = (event: DateTimePickerEvent, nextDate?: Date) => {
     if (Platform.OS === 'android') {
